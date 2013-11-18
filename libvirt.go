@@ -39,10 +39,22 @@ func GetLastError() string {
 	return errMsg
 }
 
-func (c *VirConnection) CloseConnection() error {
+func (c *VirConnection) CloseConnection() (int, error) {
 	result := int(C.virConnectClose(c.ptr))
 	if result == -1 {
-		return errors.New(GetLastError())
+		return result, errors.New(GetLastError())
+	}
+	return result, nil
+}
+
+func (c *VirConnection) UnrefAndCloseConnection() error {
+	closeRes := 1
+	var err error
+	for closeRes > 0 {
+		closeRes, err = c.CloseConnection()
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -97,21 +109,14 @@ func (c *VirConnection) ListDefinedDomains() ([]string, error) {
 }
 
 func (c *VirConnection) ListDomains() ([]uint32, error) {
-	domainIds := make([]int, 1024)
-	domainIdsPtr := unsafe.Pointer(&domainIds)
-	numDomains := C.virConnectListDomains(c.ptr, (*C.int)(domainIdsPtr), 1024)
+	var cDomainsIds [512](uint32)
+	cDomainsPointer := unsafe.Pointer(&cDomainsIds)
+	numDomains := C.virConnectListDomains(c.ptr, (*C.int)(cDomainsPointer), 512)
 	if numDomains == -1 {
 		return nil, errors.New(GetLastError())
 	}
-
-	domains := make([]uint32, numDomains)
-
-	gBytes := C.GoBytes(domainIdsPtr, C.int(numDomains*32))
-	buf := bytes.NewBuffer(gBytes)
-	for k := 0; k < int(numDomains); k++ {
-		binary.Read(buf, binary.LittleEndian, &domains[k])
-	}
-	return domains, nil
+	
+	return cDomainsIds[:numDomains], nil
 }
 
 func (c *VirConnection) LookupDomainById(id uint32) (VirDomain, error) {

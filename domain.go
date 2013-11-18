@@ -21,6 +21,22 @@ type VirDomainInfo struct {
 	ptr C.virDomainInfo
 }
 
+func (d *VirDomain) Destroy() {
+	C.virDomainDestroy(d.ptr)
+}
+
+func (d *VirDomain) Create() {
+	C.virDomainCreate(d.ptr)
+}
+
+func (d *VirDomain) Shutdown() {
+	C.virDomainShutdown(d.ptr)
+}
+
+func (d *VirDomain) Reboot() {
+	C.virDomainReboot(d.ptr, 0)
+}
+
 func (d *VirDomain) GetName() (string, error) {
 	name := C.virDomainGetName(d.ptr)
 	if name == nil {
