@@ -54,6 +54,16 @@ func (d *VirDomain) SetAutostart(autostart bool) error {
 
 	return nil
 }
+
+func (d *VirDomain) IsActive() bool {
+	result := C.virDomainIsActive(d.ptr)
+	if result == 1 {
+		return true
+	}
+
+	return false
+}
+
 func (d *VirDomain) GetName() (string, error) {
 	name := C.virDomainGetName(d.ptr)
 	if name == nil {
