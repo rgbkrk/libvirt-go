@@ -29,6 +29,14 @@ func (d *VirDomain) Create() error {
 
 	return nil
 }
+func (d *VirDomain) Destroy() error {
+	result := C.virDomainDestroy(d.ptr)
+	if result == -1 {
+		return errors.New(GetLastError())
+	}
+
+	return nil
+}
 func (d *VirDomain) GetName() (string, error) {
 	name := C.virDomainGetName(d.ptr)
 	if name == nil {
