@@ -21,6 +21,49 @@ type VirDomainInfo struct {
 	ptr C.virDomainInfo
 }
 
+func (d *VirDomain) Create() error {
+	result := C.virDomainCreate(d.ptr)
+	if result == -1 {
+		return errors.New(GetLastError())
+	}
+
+	return nil
+}
+func (d *VirDomain) Destroy() error {
+	result := C.virDomainDestroy(d.ptr)
+	if result == -1 {
+		return errors.New(GetLastError())
+	}
+
+	return nil
+}
+func (d *VirDomain) SetAutostart(autostart bool) error {
+	var cAutostart C.int
+
+	switch autostart {
+	case true:
+		cAutostart = 1
+	default:
+		cAutostart = 0
+	}
+
+	result := C.virDomainSetAutostart(d.ptr, cAutostart)
+	if result == -1 {
+		return errors.New(GetLastError())
+	}
+
+	return nil
+}
+
+func (d *VirDomain) IsActive() bool {
+	result := C.virDomainIsActive(d.ptr)
+	if result == 1 {
+		return true
+	}
+
+	return false
+}
+
 func (d *VirDomain) GetName() (string, error) {
 	name := C.virDomainGetName(d.ptr)
 	if name == nil {

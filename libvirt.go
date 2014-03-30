@@ -3,6 +3,7 @@ package libvirt
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"unsafe"
 )
 
@@ -67,12 +68,12 @@ func (c *VirConnection) GetNodeInfo() (VirNodeInfo, error) {
 }
 
 func (c *VirConnection) GetHostname() (string, error) {
-	str := C.virConnectGetHostname(c.ptr)
-	if str == nil {
+	cStr := C.virConnectGetHostname(c.ptr)
+	if cStr == nil {
 		return "", errors.New(GetLastError())
 	}
-	hostname := C.GoString(str)
-	C.free(unsafe.Pointer(str))
+	hostname := C.GoString(cStr)
+	C.free(unsafe.Pointer(cStr))
 	return hostname, nil
 }
 
@@ -121,4 +122,21 @@ func (c *VirConnection) LookupDomainByName(id string) (VirDomain, error) {
 		return VirDomain{}, errors.New(GetLastError())
 	}
 	return VirDomain{ptr: ptr}, nil
+}
+
+func (c *VirConnection) DomainDefineXML(xmlConfigFile string) (VirDomain, error) {
+	xmlCont, err := ioutil.ReadFile(xmlConfigFile)
+	if err != nil {
+		return VirDomain{}, err
+	}
+
+	cXml := C.CString(string(xmlCont))
+	defer C.free(unsafe.Pointer(cXml))
+	ptr := C.virDomainDefineXML(c.ptr, cXml)
+	if ptr == nil {
+		return VirDomain{}, errors.New(GetLastError())
+	}
+
+	return VirDomain{ptr: ptr}, nil
+
 }
