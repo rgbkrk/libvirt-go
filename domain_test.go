@@ -232,3 +232,49 @@ func TestDomainIsActive(t *testing.T) {
 		return
 	}
 }
+
+func TestGetMetadata(t *testing.T) {
+	conn := buildTestConnection()
+	defer conn.CloseConnection()
+	xml := `
+	<domain type="test">
+		<name>test domain</name>
+		<title>test domain title</title>
+        <description>test domian description</description>
+        <metadata>
+            <appl:testapp xmlns:appl="http://testdomain/app1">testval</appl:testapp>
+        </metadata>
+		<memory unit="KiB">8192</memory>
+		<os>
+			<type>hvm</type>
+		</os>
+	</domain>`
+	dom, err := conn.DomainDefineXML(xml)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if err = dom.Create(); err != nil {
+		t.Error(err)
+		return
+	}
+
+	_, err := dom.GetMetadata(VIR_DOMAIN_METADATA_DESCRIPTION, "", 0)
+	if err != nil {
+		t.Fatal("error in fetching domain description")
+		return
+	}
+
+	_, err := dom.GetMetadata(VIR_DOMAIN_METADATA_TITLE, "", 0)
+	if err != nil {
+		t.Fatal("error in fetching domain title")
+		return
+	}
+
+	uri := `http://testdomain/app1`
+	_, err := dom.GetMetadata(VIR_DOMAIN_METADATA_ELEMENT, uri, 0)
+	if err != nil {
+		t.Fatal("error in fetching URI metadata")
+		return
+	}
+}
