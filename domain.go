@@ -18,6 +18,13 @@ const (
 	VIR_DOMAIN_SHUTOFF = C.VIR_DOMAIN_SHUTOFF
 )
 
+const (
+	VIR_DOMAIN_METADATA_DESCRIPTION = C.VIR_DOMAIN_METADATA_DESCRIPTION
+	VIR_DOMAIN_METADATA_TITLE       = C.VIR_DOMAIN_METADATA_TITLE
+	VIR_DOMAIN_METADATA_ELEMENT     = C.VIR_DOMAIN_METADATA_ELEMENT
+	//VIR_DOMAIN_METADATA_LAST        = C.VIR_DOMAIN_METADATA_LAST
+)
+
 type VirDomain struct {
 	ptr C.virDomainPtr
 }
@@ -178,4 +185,43 @@ func (i *VirDomainInfo) GetNrVirtCpu() uint16 {
 
 func (i *VirDomainInfo) GetCpuTime() uint64 {
 	return uint64(i.ptr.cpuTime)
+}
+
+func (d *VirDomain) GetMetadata(metaDataType int, uri string, flags uint32) (string, error) {
+	var cUri *C.char
+	if uri != "" {
+		cUri = C.CString(uri)
+		defer C.free(unsafe.Pointer(cUri))
+	}
+	result := C.virDomainGetMetadata(d.ptr, C.int(metaDataType), cUri, C.uint(flags))
+	if result == nil {
+		return "", errors.New(GetLastError())
+
+	}
+	defer C.free(unsafe.Pointer(result))
+	return C.GoString(result), nil
+}
+
+func (d *VirDomain) SetMetadata(metaDataType int, metaDataCont, uriKey, uri string, flags uint32) error {
+	var cMetaDataCont *C.char
+	var cUriKey *C.char
+	var cUri *C.char
+
+	cMetaDataCont = C.CString(metaDataCont)
+	defer C.free(unsafe.Pointer(cMetaDataCont))
+
+	if metaDataType == VIR_DOMAIN_METADATA_ELEMENT {
+		cUriKey = C.CString(uriKey)
+		defer C.free(unsafe.Pointer(cUriKey))
+		cUri = C.CString(uri)
+		defer C.free(unsafe.Pointer(cUri))
+	}
+
+	result := C.virDomainSetMetadata(d.ptr, C.int(metaDataType), cMetaDataCont, cUriKey, cUri, C.uint(flags))
+	if result == -1 {
+		return errors.New(GetLastError())
+	}
+
+	return nil
+
 }
