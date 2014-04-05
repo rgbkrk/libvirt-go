@@ -218,3 +218,11 @@ func (d *VirDomain) SetMetadata(metaDataType int, metaDataCont, uriKey, uri stri
 	}
 	return nil
 }
+
+func (d *VirDomain) Undefine() error {
+	result := C.virDomainUndefine(d.ptr)
+	if result == -1 {
+		return errors.New(GetLastError())
+	}
+	return nil
+}
