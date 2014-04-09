@@ -96,8 +96,8 @@ func TestCreateDomainSnapshotXML(t *testing.T) {
 			<description>Test snapshot that will fail because its unsupported</description>
 		</domainsnapshot>
 	`, 0)
-	if err != nil {
-		t.Error(err)
+	if err == nil {
+		t.Fatal("Snapshot should have failed on test driver")
 		return
 	}
 }
