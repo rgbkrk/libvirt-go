@@ -1,0 +1,7 @@
+image: alexzorin/libvirt-go_test:0.9
+script:
+  - go test -v
+notify:
+  email:
+   recipients:
+     - git@zor.io
