@@ -89,6 +89,49 @@ func (c *VirConnection) GetHostname() (string, error) {
 	return hostname, nil
 }
 
+func (c *VirConnection) GetType() (string, error) {
+	str := C.virConnectGetType(c.ptr)
+	if str == nil {
+		return "", errors.New(GetLastError())
+	}
+	hypDriver := C.GoString(str)
+	C.free(unsafe.Pointer(str))
+	return hypDriver, nil
+}
+
+func (c *VirConnection) IsAlive() (bool, error) {
+	result := C.virConnectIsAlive(c.ptr)
+	if result == -1 {
+		return false, errors.New(GetLastError())
+	}
+	if result == 1 {
+		return true, nil
+	}
+	return false, nil
+}
+
+func (c *VirConnection) IsEncrypted() (bool, error) {
+	result := C.virConnectIsEncrypted(c.ptr)
+	if result == -1 {
+		return false, errors.New(GetLastError())
+	}
+	if result == 1 {
+		return true, nil
+	}
+	return false, nil
+}
+
+func (c *VirConnection) IsSecure() (bool, error) {
+	result := C.virConnectIsSecure(c.ptr)
+	if result == -1 {
+		return false, errors.New(GetLastError())
+	}
+	if result == 1 {
+		return true, nil
+	}
+	return false, nil
+}
+
 func (c *VirConnection) ListDefinedDomains() ([]string, error) {
 	var names [1024](*C.char)
 	namesPtr := unsafe.Pointer(&names)
@@ -152,4 +195,114 @@ func (c *VirConnection) DomainDefineXML(xmlConfig string) (VirDomain, error) {
 		return VirDomain{}, errors.New(GetLastError())
 	}
 	return VirDomain{ptr: ptr}, nil
+}
+
+func (c *VirConnection) ListDefinedInterfaces() ([]string, error) {
+	var names [1024](*C.char)
+	namesPtr := unsafe.Pointer(&names)
+	numIfaces := C.virConnectListDefinedInterfaces(
+		c.ptr,
+		(**C.char)(namesPtr),
+		1024)
+	if numIfaces == -1 {
+		return nil, errors.New(GetLastError())
+	}
+	goNames := make([]string, numIfaces)
+	for k := 0; k < int(numIfaces); k++ {
+		goNames[k] = C.GoString(names[k])
+		C.free(unsafe.Pointer(names[k]))
+	}
+	return goNames, nil
+}
+
+func (c *VirConnection) ListDefinedNetworks() ([]string, error) {
+	var names [1024](*C.char)
+	namesPtr := unsafe.Pointer(&names)
+	numNetworks := C.virConnectListDefinedNetworks(
+		c.ptr,
+		(**C.char)(namesPtr),
+		1024)
+	if numNetworks == -1 {
+		return nil, errors.New(GetLastError())
+	}
+	goNames := make([]string, numNetworks)
+	for k := 0; k < int(numNetworks); k++ {
+		goNames[k] = C.GoString(names[k])
+		C.free(unsafe.Pointer(names[k]))
+	}
+	return goNames, nil
+}
+
+func (c *VirConnection) ListDefinedStoragePools() ([]string, error) {
+	var names [1024](*C.char)
+	namesPtr := unsafe.Pointer(&names)
+	numStoragePools := C.virConnectListDefinedStoragePools(
+		c.ptr,
+		(**C.char)(namesPtr),
+		1024)
+	if numStoragePools == -1 {
+		return nil, errors.New(GetLastError())
+	}
+	goNames := make([]string, numStoragePools)
+	for k := 0; k < int(numStoragePools); k++ {
+		goNames[k] = C.GoString(names[k])
+		C.free(unsafe.Pointer(names[k]))
+	}
+	return goNames, nil
+}
+
+func (c *VirConnection) NumOfDefinedInterfaces() (int, error) {
+	result := int(C.virConnectNumOfDefinedInterfaces(c.ptr))
+	if result == -1 {
+		return 0, errors.New(GetLastError())
+	}
+	return result, nil
+}
+
+func (c *VirConnection) NumOfDefinedNetworks() (int, error) {
+	result := int(C.virConnectNumOfDefinedNetworks(c.ptr))
+	if result == -1 {
+		return 0, errors.New(GetLastError())
+	}
+	return result, nil
+}
+
+func (c *VirConnection) NumOfDefinedStoragePools() (int, error) {
+	result := int(C.virConnectNumOfDefinedStoragePools(c.ptr))
+	if result == -1 {
+		return 0, errors.New(GetLastError())
+	}
+	return result, nil
+}
+
+func (c *VirConnection) NumOfDomains() (int, error) {
+	result := int(C.virConnectNumOfDomains(c.ptr))
+	if result == -1 {
+		return 0, errors.New(GetLastError())
+	}
+	return result, nil
+}
+
+func (c *VirConnection) NumOfInterfaces() (int, error) {
+	result := int(C.virConnectNumOfInterfaces(c.ptr))
+	if result == -1 {
+		return 0, errors.New(GetLastError())
+	}
+	return result, nil
+}
+
+func (c *VirConnection) NumOfNetworks() (int, error) {
+	result := int(C.virConnectNumOfNetworks(c.ptr))
+	if result == -1 {
+		return 0, errors.New(GetLastError())
+	}
+	return result, nil
+}
+
+func (c *VirConnection) NumOfNWFilters() (int, error) {
+	result := int(C.virConnectNumOfNWFilters(c.ptr))
+	if result == -1 {
+		return 0, errors.New(GetLastError())
+	}
+	return result, nil
 }
