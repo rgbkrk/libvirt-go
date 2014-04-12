@@ -33,6 +33,57 @@ func TestInvalidConnection(t *testing.T) {
 	}
 }
 
+func TestGetType(t *testing.T) {
+	conn := buildTestConnection()
+	defer conn.CloseConnection()
+	tp, err := conn.GetType()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if tp != "Test" {
+		t.Fatalf("type should have been test: %s", tp)
+		return
+	}
+}
+
+func TestIsAlive(t *testing.T) {
+	conn := buildTestConnection()
+	defer conn.CloseConnection()
+	alive, err := conn.IsAlive()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !alive {
+		t.Fatal("Connection should be alive")
+		return
+	}
+}
+
+func TestIsEncryptedAndSecure(t *testing.T) {
+	conn := buildTestConnection()
+	defer conn.CloseConnection()
+	secure, err := conn.IsSecure()
+	if err != nil {
+		t.Log(err)
+		return
+	}
+	enc, err := conn.IsEncrypted()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !secure {
+		t.Fatal("Test driver should be secure")
+		return
+	}
+	if enc {
+		t.Fatal("Test driver should not be encrypted")
+		return
+	}
+}
+
 func TestCapabilities(t *testing.T) {
 	conn := buildTestConnection()
 	defer conn.CloseConnection()
@@ -169,6 +220,7 @@ func TestDomainDefineXML(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	defer dom.Undefine()
 	name, err := dom.GetName()
 	if err != nil {
 		t.Error(err)
@@ -183,6 +235,99 @@ func TestDomainDefineXML(t *testing.T) {
 	_, err = conn.DomainDefineXML(xml)
 	if err == nil {
 		t.Fatal("Should have had an error")
+		return
+	}
+}
+
+func TestListDefinedInterfaces(t *testing.T) {
+	conn := buildTestConnection()
+	defer conn.CloseConnection()
+	_, err := conn.ListDefinedInterfaces()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestListDefinedNetworks(t *testing.T) {
+	conn := buildTestConnection()
+	defer conn.CloseConnection()
+	_, err := conn.ListDefinedNetworks()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestListDefinedStoragePools(t *testing.T) {
+	conn := buildTestConnection()
+	defer conn.CloseConnection()
+	_, err := conn.ListDefinedStoragePools()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestNumOfDefinedInterfaces(t *testing.T) {
+	conn := buildTestConnection()
+	defer conn.CloseConnection()
+	if _, err := conn.NumOfDefinedInterfaces(); err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestNumOfDefinedNetworks(t *testing.T) {
+	conn := buildTestConnection()
+	defer conn.CloseConnection()
+	if _, err := conn.NumOfDefinedNetworks(); err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestNumOfDefinedStoragePools(t *testing.T) {
+	conn := buildTestConnection()
+	defer conn.CloseConnection()
+	if _, err := conn.NumOfDefinedStoragePools(); err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestNumOfDomains(t *testing.T) {
+	conn := buildTestConnection()
+	defer conn.CloseConnection()
+	if _, err := conn.NumOfDomains(); err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestNumOfInterfaces(t *testing.T) {
+	conn := buildTestConnection()
+	defer conn.CloseConnection()
+	if _, err := conn.NumOfInterfaces(); err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestNumOfNetworks(t *testing.T) {
+	conn := buildTestConnection()
+	defer conn.CloseConnection()
+	if _, err := conn.NumOfNetworks(); err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestNumOfNWFilters(t *testing.T) {
+	conn := buildTestConnection()
+	defer conn.CloseConnection()
+	if _, err := conn.NumOfNWFilters(); err == nil {
+		t.Fatalf("NumOfNWFilters should fail due to no support on test driver")
 		return
 	}
 }
