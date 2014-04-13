@@ -13,11 +13,6 @@ import (
 	"unsafe"
 )
 
-const (
-	VIR_DOMAIN_RUNNING = C.VIR_DOMAIN_RUNNING
-	VIR_DOMAIN_SHUTOFF = C.VIR_DOMAIN_SHUTOFF
-)
-
 type VirDomain struct {
 	ptr C.virDomainPtr
 }
