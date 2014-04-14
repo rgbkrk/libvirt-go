@@ -154,6 +154,36 @@ func TestListDomains(t *testing.T) {
 	}
 }
 
+func TestListInterfaces(t *testing.T) {
+	conn := buildTestConnection()
+	defer conn.CloseConnection()
+	_, err := conn.ListInterfaces()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestListNetworks(t *testing.T) {
+	conn := buildTestConnection()
+	defer conn.CloseConnection()
+	_, err := conn.ListNetworks()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestListStoragePools(t *testing.T) {
+	conn := buildTestConnection()
+	defer conn.CloseConnection()
+	_, err := conn.ListStoragePools()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}
+
 func TestLookupDomainById(t *testing.T) {
 	conn := buildTestConnection()
 	defer conn.CloseConnection()
@@ -329,5 +359,18 @@ func TestNumOfNWFilters(t *testing.T) {
 	if _, err := conn.NumOfNWFilters(); err == nil {
 		t.Fatalf("NumOfNWFilters should fail due to no support on test driver")
 		return
+	}
+}
+
+func TestGetURI(t *testing.T) {
+	conn := buildTestConnection()
+	defer conn.CloseConnection()
+	uri, err := conn.GetURI()
+	if err != nil {
+		t.Error(err)
+	}
+	origUri := "test:///default"
+	if uri != origUri {
+		t.Fatalf("should be %s but got %s", origUri, uri)
 	}
 }
