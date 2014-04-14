@@ -107,20 +107,6 @@ func TestGetDomainXMLDesc(t *testing.T) {
 	}
 }
 
-func TestCreateDomainSnapshotXML(t *testing.T) {
-	dom, conn := buildTestDomain()
-	defer conn.CloseConnection()
-	_, err := dom.CreateSnapshotXML(`
-		<domainsnapshot>
-			<description>Test snapshot that will fail because its unsupported</description>
-		</domainsnapshot>
-	`, 0)
-	if err == nil {
-		t.Fatal("Snapshot should have failed on test driver")
-		return
-	}
-}
-
 func TestSaveDomain(t *testing.T) {
 	dom, conn := buildTestDomain()
 	defer conn.CloseConnection()
