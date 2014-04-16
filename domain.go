@@ -182,3 +182,11 @@ func (d *VirDomain) Undefine() error {
 	}
 	return nil
 }
+
+func (d *VirDomain) SetMemory(memory uint64) error {
+	result := C.virDomainSetMemory(d.ptr, C.ulong(memory))
+	if result == -1 {
+		return errors.New(GetLastError())
+	}
+	return nil
+}
