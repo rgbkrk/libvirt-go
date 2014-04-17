@@ -246,7 +246,7 @@ func (d *VirDomain) SetVcpus(vcpu uint) error {
 }
 
 func (d *VirDomain) SetVcpusFlags(vcpu uint, flags uint) error {
-	result := C.virDomainSetVcpusFlags(d.ptr, C.ulong(vcpu), C.uint(flags))
+	result := C.virDomainSetVcpusFlags(d.ptr, C.uint(vcpu), C.uint(flags))
 	if result == -1 {
 		return errors.New(GetLastError())
 	}
