@@ -462,4 +462,3 @@ func TestLookupStoragePoolByName(t *testing.T) {
 	}
 }
 
-
