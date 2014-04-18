@@ -412,3 +412,55 @@ func TestGetMaxVcpus(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func TestStoragePoolDefineXML(t *testing.T) {
+	conn := buildTestConnection()
+	defer conn.CloseConnection()
+	defName := "default-pool-test-0"
+	xml := `<pool type='dir'><name>default-pool-test-0</name><target>
+            <path>/default-pool</path></target></pool>`
+	pool, err := conn.StoragePoolDefineXML(xml, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pool.Undefine()
+	defer pool.Free()
+	name, err := pool.GetName()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if name != defName {
+		t.Fatalf("Expected storage pool name: %s,got: %s", defName, name)
+		return
+	}
+	// Invalid configuration
+	xml = `<pool type='bad'></pool>`
+	_, err = conn.StoragePoolDefineXML(xml, 0)
+	if err == nil {
+		t.Fatal("Should have had an error")
+		return
+	}
+}
+
+func TestLookupStoragePoolByName(t *testing.T) {
+	conn := buildTestConnection()
+	defer conn.CloseConnection()
+	testPool := "default-pool"
+	pool, err := conn.LookupStoragePoolByName(testPool)
+	defer pool.Free()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var poolName string
+	poolName, err = pool.GetName()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if poolName != testPool {
+		t.Fatalf("expected storage pool name: %s ,got: %s", testPool, poolName)
+	}
+}
+
