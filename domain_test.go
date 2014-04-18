@@ -128,7 +128,6 @@ func TestGetDomainXMLDesc(t *testing.T) {
 	}
 }
 
-
 func TestSaveDomain(t *testing.T) {
 	dom, conn := buildTestDomain()
 	defer func() {
