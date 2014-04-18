@@ -424,6 +424,7 @@ func TestStoragePoolDefineXML(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer pool.Undefine()
+	defer pool.Free()
 	name, err := pool.GetName()
 	if err != nil {
 		t.Error(err)
@@ -447,6 +448,7 @@ func TestLookupStoragePoolByName(t *testing.T) {
 	defer conn.CloseConnection()
 	testPool := "default-pool"
 	pool, err := conn.LookupStoragePoolByName(testPool)
+	defer pool.Free()
 	if err != nil {
 		t.Error(err)
 		return
