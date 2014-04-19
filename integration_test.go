@@ -117,3 +117,39 @@ func TestIntegrationGetSysinfo(t *testing.T) {
 		return
 	}
 }
+
+func testNWFilterXML(name, chain string) string {
+	defName := name
+	if defName == "" {
+		defName = time.Now().String()
+	}
+	return `<filter name='` + defName + `' chain='` + chain + `'>
+            <rule action='drop' direction='out' priority='500'>
+            <ip match='no' srcipaddr='$IP'/>
+            </rule>
+			</filter>`
+}
+
+func TestIntergrationDefineUndefineNWFilterXML(t *testing.T) {
+	conn, err := NewVirConnection("lxc:///")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer conn.CloseConnection()
+	filter, err := conn.NWFilterDefineXML(testNWFilterXML("", "ipv4"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := filter.Undefine(); err != nil {
+			t.Fatal(err)
+		}
+		filter.Free()
+	}()
+	_, err = conn.NWFilterDefineXML(testNWFilterXML("", "bad"))
+	if err == nil {
+		t.Fatal("Should have had an error")
+	}
+}
+

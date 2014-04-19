@@ -511,3 +511,21 @@ func (c *VirConnection) LookupStoragePoolByName(name string) (VirStoragePool, er
 	}
 	return VirStoragePool{ptr: ptr}, nil
 }
+
+func (c *VirConnection) NWFilterDefineXMLFromFile(xmlFile string) (VirNWFilter, error) {
+	xmlConfig, err := ioutil.ReadFile(xmlFile)
+	if err != nil {
+		return VirNWFilter{}, err
+	}
+	return c.NWFilterDefineXML(string(xmlConfig))
+}
+
+func (c *VirConnection) NWFilterDefineXML(xmlConfig string) (VirNWFilter, error) {
+	cXml := C.CString(string(xmlConfig))
+	defer C.free(unsafe.Pointer(cXml))
+	ptr := C.virNWFilterDefineXML(c.ptr, cXml)
+	if ptr == nil {
+		return VirNWFilter{}, errors.New(GetLastError())
+	}
+	return VirNWFilter{ptr: ptr}, nil
+}
