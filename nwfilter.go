@@ -10,6 +10,7 @@ import "C"
 
 import (
 	"errors"
+	"unsafe"
 )
 
 type VirNWFilter struct {
@@ -39,4 +40,22 @@ func (f *VirNWFilter) Undefine() error {
 	return nil
 }
 
+func (f *VirNWFilter) GetUUID() ([]byte, error) {
+	var cUuid [C.VIR_UUID_BUFLEN](byte)
+	cuidPtr := unsafe.Pointer(&cUuid)
+	result := C.virNWFilterGetUUID(f.ptr, (*C.uchar)(cuidPtr))
+	if result != 0 {
+		return []byte{}, errors.New(GetLastError())
+	}
+	return C.GoBytes(cuidPtr, C.VIR_UUID_BUFLEN), nil
+}
 
+func (f *VirNWFilter) GetUUIDString() (string, error) {
+	var cUuid [C.VIR_UUID_STRING_BUFLEN](C.char)
+	cuidPtr := unsafe.Pointer(&cUuid)
+	result := C.virNWFilterGetUUIDString(f.ptr, (*C.char)(cuidPtr))
+	if result != 0 {
+		return "", errors.New(GetLastError())
+	}
+	return C.GoString((*C.char)(cuidPtr)), nil
+}

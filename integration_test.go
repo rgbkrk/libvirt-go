@@ -173,3 +173,45 @@ func TestIntegrationNWFilterGetName(t *testing.T) {
 	}
 }
 
+func TestIntegrationNWFilterGetUUID(t *testing.T) {
+	conn, err := NewVirConnection("lxc:///")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer conn.CloseConnection()
+	filter, err := conn.NWFilterDefineXML(testNWFilterXML("", "ipv4"))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer func() {
+		filter.Undefine()
+		filter.Free()
+	}()
+	if _, err := filter.GetUUID(); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestIntegrationNWFilterGetUUIDString(t *testing.T) {
+	conn, err := NewVirConnection("lxc:///")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer conn.CloseConnection()
+	filter, err := conn.NWFilterDefineXML(testNWFilterXML("", "ipv4"))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer func() {
+		filter.Undefine()
+		filter.Free()
+	}()
+	if _, err := filter.GetUUIDString(); err != nil {
+		t.Error(err)
+	}
+}
+
