@@ -163,6 +163,7 @@ func TestIntegrationNWFilterGetName(t *testing.T) {
 	filter, err := conn.NWFilterDefineXML(testNWFilterXML("", "ipv4"))
 	if err != nil {
 		t.Error(err)
+		return
 	}
 	defer func() {
 		filter.Undefine()
@@ -236,3 +237,35 @@ func TestIntegrationNWFilterGetXMLDesc(t *testing.T) {
 	}
 }
 
+func TestIntegrationLookupNWFilterByName(t *testing.T) {
+	conn, err := NewVirConnection("lxc:///")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer conn.CloseConnection()
+	origName := time.Now().String()
+	filter, err := conn.NWFilterDefineXML(testNWFilterXML(origName, "ipv4"))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer func() {
+		filter.Undefine()
+		filter.Free()
+	}()
+	filter, err = conn.LookupNWFilterByName(origName)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var newName string
+	newName, err = filter.GetName()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if newName != origName {
+		t.Fatalf("expected filter name: %s ,got: %s", origName, newName)
+	}
+}

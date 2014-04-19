@@ -529,3 +529,13 @@ func (c *VirConnection) NWFilterDefineXML(xmlConfig string) (VirNWFilter, error)
 	}
 	return VirNWFilter{ptr: ptr}, nil
 }
+
+func (c *VirConnection) LookupNWFilterByName(name string) (VirNWFilter, error) {
+	cName := C.CString(name)
+	defer C.free(unsafe.Pointer(cName))
+	ptr := C.virNWFilterLookupByName(c.ptr, cName)
+	if ptr == nil {
+		return VirNWFilter{}, errors.New(GetLastError())
+	}
+	return VirNWFilter{ptr: ptr}, nil
+}
