@@ -59,3 +59,14 @@ func (f *VirNWFilter) GetUUIDString() (string, error) {
 	}
 	return C.GoString((*C.char)(cuidPtr)), nil
 }
+
+func (f *VirNWFilter) GetXMLDesc(flags uint32) (string, error) {
+	result := C.virNWFilterGetXMLDesc(f.ptr, C.uint(flags))
+	if result == nil {
+		return "", errors.New(GetLastError())
+	}
+	xml := C.GoString(result)
+	C.free(unsafe.Pointer(result))
+	return xml, nil
+}
+
