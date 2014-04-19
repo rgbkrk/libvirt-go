@@ -153,3 +153,23 @@ func TestIntergrationDefineUndefineNWFilterXML(t *testing.T) {
 	}
 }
 
+func TestIntegrationNWFilterGetName(t *testing.T) {
+	conn, err := NewVirConnection("lxc:///")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer conn.CloseConnection()
+	filter, err := conn.NWFilterDefineXML(testNWFilterXML("", "ipv4"))
+	if err != nil {
+		t.Error(err)
+	}
+	defer func() {
+		filter.Undefine()
+		filter.Free()
+	}()
+	if _, err := filter.GetName(); err != nil {
+		t.Error(err)
+	}
+}
+
