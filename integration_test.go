@@ -269,3 +269,46 @@ func TestIntegrationLookupNWFilterByName(t *testing.T) {
 		t.Fatalf("expected filter name: %s ,got: %s", origName, newName)
 	}
 }
+
+func TestIntegrationLookupNWFilterByUUIDString(t *testing.T) {
+	conn, err := NewVirConnection("lxc:///")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer conn.CloseConnection()
+	origName := time.Now().String()
+	filter, err := conn.NWFilterDefineXML(testNWFilterXML(origName, "ipv4"))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer func() {
+		filter.Undefine()
+		filter.Free()
+	}()
+	filter, err = conn.LookupNWFilterByName(origName)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var filterUUID string
+	filterUUID, err = filter.GetUUIDString()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	filter, err = conn.LookupNWFilterByUUIDString(filterUUID)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	name, err := filter.GetName()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if name != origName {
+		t.Fatalf("fetching by UUID: expected filter name: %s ,got: %s", name, origName)
+	}
+}

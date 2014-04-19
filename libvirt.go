@@ -539,3 +539,13 @@ func (c *VirConnection) LookupNWFilterByName(name string) (VirNWFilter, error) {
 	}
 	return VirNWFilter{ptr: ptr}, nil
 }
+
+func (c *VirConnection) LookupNWFilterByUUIDString(uuid string) (VirNWFilter, error) {
+	cUuid := C.CString(uuid)
+	defer C.free(unsafe.Pointer(cUuid))
+	ptr := C.virNWFilterLookupByUUIDString(c.ptr, cUuid)
+	if ptr == nil {
+		return VirNWFilter{}, errors.New(GetLastError())
+	}
+	return VirNWFilter{ptr: ptr}, nil
+}
