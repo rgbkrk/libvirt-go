@@ -443,3 +443,35 @@ func TesDomainDestoryFlags(t *testing.T) {
 		return
 	}
 }
+
+func TestDomainAttachDevice(t *testing.T) {
+	dom, conn := buildTestDomain()
+	defer func() {
+		dom.Free()
+		conn.CloseConnection()
+	}()
+	if err := dom.AttachDevice(
+		`<interface type='bridge'>
+		<source bridge='br0'/>
+		<model type='virtio'/>
+		</interface>`); err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestDomainAttachDeviceFlags(t *testing.T) {
+	dom, conn := buildTestDomain()
+	defer func() {
+		dom.Free()
+		conn.CloseConnection()
+	}()
+	if err := dom.AttachDeviceFlags(
+		`<interface type='bridge'>
+		<source bridge='br0'/>
+		<model type='virtio'/>
+		</interface>`, VIR_DOMAIN_DEVICE_MODIFY_LIVE); err != nil {
+		t.Error(err)
+		return
+	}
+}
