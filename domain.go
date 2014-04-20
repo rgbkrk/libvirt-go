@@ -299,3 +299,11 @@ func (d *VirDomain) AbortJob() error {
 	}
 	return nil
 }
+
+func (d *VirDomain) DestroyFlags(flags uint) error {
+	result := C.virDomainDestroyFlags(d.ptr, C.uint(flags))
+	if result == -1 {
+		return errors.New(GetLastError())
+	}
+	return nil
+}
