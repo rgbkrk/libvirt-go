@@ -475,3 +475,35 @@ func TestDomainAttachDeviceFlags(t *testing.T) {
 		return
 	}
 }
+
+func TestDomainDetachDevice(t *testing.T) {
+	dom, conn := buildTestDomain()
+	defer func() {
+		dom.Free()
+		conn.CloseConnection()
+	}()
+	if err := dom.DetachDevice(
+		`<interface type='bridge'>
+		<source bridge='br0'/>
+		<model type='virtio'/>
+		</interface>`); err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestDomainDetachDeviceFlags(t *testing.T) {
+	dom, conn := buildTestDomain()
+	defer func() {
+		dom.Free()
+		conn.CloseConnection()
+	}()
+	if err := dom.DetachDeviceFlags(
+		`<interface type='bridge'>
+		<source bridge='br0'/>
+		<model type='virtio'/>
+		</interface>`, VIR_DOMAIN_DEVICE_MODIFY_LIVE); err != nil {
+		t.Error(err)
+		return
+	}
+}
