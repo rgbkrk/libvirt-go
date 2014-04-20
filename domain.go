@@ -307,3 +307,11 @@ func (d *VirDomain) DestroyFlags(flags uint) error {
 	}
 	return nil
 }
+
+func (d *VirDomain) ShutdownFlags(flags uint) error {
+	result := C.virDomainShutdownFlags(d.ptr, C.uint(flags))
+	if result == -1 {
+		return errors.New(GetLastError())
+	}
+	return nil
+}
