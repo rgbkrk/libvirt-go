@@ -291,3 +291,11 @@ func (d *VirDomain) Resume() error {
 	}
 	return nil
 }
+
+func (d *VirDomain) AbortJob() error {
+	result := C.virDomainAbortJob(d.ptr)
+	if result == -1 {
+		return errors.New(GetLastError())
+	}
+	return nil
+}
