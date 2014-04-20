@@ -325,3 +325,13 @@ func (d *VirDomain) AttachDevice(xml string) error {
 	}
 	return nil
 }
+
+func (d *VirDomain) AttachDeviceFlags(xml string, flags uint) error {
+	cXml := C.CString(xml)
+	defer C.free(unsafe.Pointer(cXml))
+	result := C.virDomainAttachDeviceFlags(d.ptr, cXml, C.uint(flags))
+	if result == -1 {
+		return errors.New(GetLastError())
+	}
+	return nil
+}
