@@ -283,3 +283,11 @@ func (d *VirDomain) Suspend() error {
 	}
 	return nil
 }
+
+func (d *VirDomain) Resume() error {
+	result := C.virDomainResume(d.ptr)
+	if result == -1 {
+		return errors.New(GetLastError())
+	}
+	return nil
+}
