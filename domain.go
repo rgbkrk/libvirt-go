@@ -345,3 +345,13 @@ func (d *VirDomain) DetachDevice(xml string) error {
 	}
 	return nil
 }
+
+func (d *VirDomain) DetachDeviceFlags(xml string, flags uint) error {
+	cXml := C.CString(xml)
+	defer C.free(unsafe.Pointer(cXml))
+	result := C.virDomainDetachDeviceFlags(d.ptr, cXml, C.uint(flags))
+	if result == -1 {
+		return errors.New(GetLastError())
+	}
+	return nil
+}
