@@ -275,3 +275,11 @@ func (d *VirDomain) SetVcpusFlags(vcpu uint, flags uint) error {
 	}
 	return nil
 }
+
+func (d *VirDomain) Suspend() error {
+	result := C.virDomainSuspend(d.ptr)
+	if result == -1 {
+		return errors.New(GetLastError())
+	}
+	return nil
+}
