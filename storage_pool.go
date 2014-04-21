@@ -199,3 +199,13 @@ func (p *VirStoragePool) StorageVolCreateXML(xmlConfig string, flags uint32) (Vi
 	}
 	return VirStorageVol{ptr: ptr}, nil
 }
+
+func (p *VirStoragePool) LookupStorageVolByName(name string) (VirStorageVol, error) {
+	cName := C.CString(name)
+	defer C.free(unsafe.Pointer(cName))
+	ptr := C.virStorageVolLookupByName(p.ptr, cName)
+	if ptr == nil {
+		return VirStorageVol{}, errors.New(GetLastError())
+	}
+	return VirStorageVol{ptr: ptr}, nil
+}

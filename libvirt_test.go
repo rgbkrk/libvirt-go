@@ -568,3 +568,81 @@ func TestLookupStoragePoolByUUIDString(t *testing.T) {
 		t.Fatalf("fetching by UUID: expected storage pool name: %s ,got: %s", name, poolName)
 	}
 }
+
+func TestLookupStorageVolByKey(t *testing.T) {
+	pool, conn := buildTestStoragePool()
+	defer func() {
+		pool.Undefine()
+		pool.Free()
+		conn.CloseConnection()
+	}()
+	if err := pool.Create(0); err != nil {
+		t.Error(err)
+		return
+	}
+	defer pool.Destroy()
+	defPoolName := "default-pool"
+	defVolName := time.Now().String()
+	defKey := "/" + defPoolName + "/" + defVolName
+	vol, err := pool.StorageVolCreateXML(testStorageVolXML(defVolName, defPoolName), 0)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer func() {
+		vol.Delete(VIR_STORAGE_VOL_DELETE_NORMAL)
+		vol.Free()
+	}()
+	vol, err = conn.LookupStorageVolByKey(defKey)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	key, err := vol.GetKey()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if key != defKey {
+		t.Fatalf("expected storage volume key: %s ,got: %s", defKey, key)
+	}
+}
+
+func TestLookupStorageVolByPath(t *testing.T) {
+	pool, conn := buildTestStoragePool()
+	defer func() {
+		pool.Undefine()
+		pool.Free()
+		conn.CloseConnection()
+	}()
+	if err := pool.Create(0); err != nil {
+		t.Error(err)
+		return
+	}
+	defer pool.Destroy()
+	defPoolName := "default-pool"
+	defVolName := time.Now().String()
+	defPath := "/" + defPoolName + "/" + defVolName
+	vol, err := pool.StorageVolCreateXML(testStorageVolXML(defVolName, defPoolName), 0)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer func() {
+		vol.Delete(VIR_STORAGE_VOL_DELETE_NORMAL)
+		vol.Free()
+	}()
+	vol, err = conn.LookupStorageVolByPath(defPath)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	path, err := vol.GetPath()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if path != defPath {
+		t.Fatalf("expected storage volume path: %s ,got: %s", defPath, path)
+	}
+}

@@ -10,14 +10,12 @@ func testStorageVolXML(volName, poolName string) string {
 	if defName == "" {
 		defName = time.Now().String()
 	}
-
-	defName += ".img"
 	return `<volume>
         <name>` + defName + `</name>
         <allocation>0</allocation>
         <capacity unit="M">10</capacity>
         <target>
-          <path>` + poolName + "/" + defName + `</path>
+          <path>` + "/" + poolName + "/" + defName + `</path>
           <permissions>
             <owner>107</owner>
             <group>107</group>
