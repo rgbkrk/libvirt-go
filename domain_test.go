@@ -375,3 +375,135 @@ func TestDomainFree(t *testing.T) {
 		return
 	}
 }
+
+func TestDomainAbortJob(t *testing.T) {
+	dom, conn := buildTestDomain()
+	defer func() {
+		dom.Free()
+		conn.CloseConnection()
+	}()
+	if err := dom.AbortJob(); err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestDomainSuspend(t *testing.T) {
+	dom, conn := buildTestDomain()
+	defer func() {
+		dom.Free()
+		conn.CloseConnection()
+	}()
+	if err := dom.Suspend(); err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TesDomainShutdownFlags(t *testing.T) {
+	dom, conn := buildTestDomain()
+	defer conn.CloseConnection()
+	if err := dom.Create(); err != nil {
+		t.Error(err)
+		return
+	}
+	if err := dom.ShutdownFlags(VIR_DOMAIN_SHUTDOWN_SIGNAL); err != nil {
+		t.Error(err)
+		return
+	}
+	state, err := dom.GetState()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if state[0] != 5 || state[1] != 1 {
+		t.Fatal("state should be [5 1]")
+		return
+	}
+}
+
+func TesDomainDestoryFlags(t *testing.T) {
+	dom, conn := buildTestDomain()
+	defer conn.CloseConnection()
+	if err := dom.Create(); err != nil {
+		t.Error(err)
+		return
+	}
+	if err := dom.DestroyFlags(VIR_DOMAIN_DESTROY_GRACEFUL); err != nil {
+		t.Error(err)
+		return
+	}
+	state, err := dom.GetState()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if state[0] != 5 || state[1] != 1 {
+		t.Fatal("state should be [5 1]")
+		return
+	}
+}
+
+func TestDomainAttachDevice(t *testing.T) {
+	dom, conn := buildTestDomain()
+	defer func() {
+		dom.Free()
+		conn.CloseConnection()
+	}()
+	if err := dom.AttachDevice(
+		`<interface type='bridge'>
+		<source bridge='br0'/>
+		<model type='virtio'/>
+		</interface>`); err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestDomainAttachDeviceFlags(t *testing.T) {
+	dom, conn := buildTestDomain()
+	defer func() {
+		dom.Free()
+		conn.CloseConnection()
+	}()
+	if err := dom.AttachDeviceFlags(
+		`<interface type='bridge'>
+		<source bridge='br0'/>
+		<model type='virtio'/>
+		</interface>`, VIR_DOMAIN_DEVICE_MODIFY_LIVE); err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestDomainDetachDevice(t *testing.T) {
+	dom, conn := buildTestDomain()
+	defer func() {
+		dom.Free()
+		conn.CloseConnection()
+	}()
+	if err := dom.DetachDevice(
+		`<interface type='bridge'>
+		<source bridge='br0'/>
+		<model type='virtio'/>
+		</interface>`); err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestDomainDetachDeviceFlags(t *testing.T) {
+	dom, conn := buildTestDomain()
+	defer func() {
+		dom.Free()
+		conn.CloseConnection()
+	}()
+	if err := dom.DetachDeviceFlags(
+		`<interface type='bridge'>
+		<source bridge='br0'/>
+		<model type='virtio'/>
+		</interface>`, VIR_DOMAIN_DEVICE_MODIFY_LIVE); err != nil {
+		t.Error(err)
+		return
+	}
+}
