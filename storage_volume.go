@@ -75,3 +75,13 @@ func (v *VirStorageVol) GetName() (string, error) {
 	}
 	return C.GoString(name), nil
 }
+
+func (v *VirStorageVol) GetPath() (string, error) {
+	result := C.virStorageVolGetPath(v.ptr)
+	if result == nil {
+		return "", errors.New(GetLastError())
+	}
+	path := C.GoString(result)
+	C.free(unsafe.Pointer(result))
+	return path, nil
+}

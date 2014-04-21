@@ -105,3 +105,29 @@ func TestStorageVolGetName(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestStorageVolGetPath(t *testing.T) {
+	pool, conn := buildTestStoragePool()
+	defer func() {
+		pool.Undefine()
+		pool.Free()
+		conn.CloseConnection()
+	}()
+	if err := pool.Create(0); err != nil {
+		t.Error(err)
+		return
+	}
+	defer pool.Destroy()
+	vol, err := pool.StorageVolCreateXML(testStorageVolXML("", "default-pool"), 0)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer func() {
+		vol.Delete(VIR_STORAGE_VOL_DELETE_NORMAL)
+		vol.Free()
+	}()
+	if _, err := vol.GetPath(); err != nil {
+		t.Fatal(err)
+	}
+}
