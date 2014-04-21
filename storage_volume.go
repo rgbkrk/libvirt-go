@@ -46,3 +46,32 @@ func (v *VirStorageVol) GetInfo() (VirStorageVolInfo, error) {
 	vi.ptr = ptr
 	return vi, nil
 }
+
+// TODO: "type" is a builtin type in Go.Won't compile
+//func (i *VirStorageVolInfo) GetType() int {
+//	return int(i.ptr.type)
+//}
+
+func (i *VirStorageVolInfo) GetCapacityInBytes() uint64 {
+	return uint64(i.ptr.capacity)
+}
+
+func (i *VirStorageVolInfo) GetAllocationInBytes() uint64 {
+	return uint64(i.ptr.allocation)
+}
+
+func (v *VirStorageVol) GetKey() (string, error) {
+	key := C.virStorageVolGetKey(v.ptr)
+	if key == nil {
+		return "", errors.New(GetLastError())
+	}
+	return C.GoString(key), nil
+}
+
+func (v *VirStorageVol) GetName() (string, error) {
+	name := C.virStorageVolGetName(v.ptr)
+	if name == nil {
+		return "", errors.New(GetLastError())
+	}
+	return C.GoString(name), nil
+}
