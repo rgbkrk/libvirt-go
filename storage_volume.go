@@ -85,3 +85,13 @@ func (v *VirStorageVol) GetPath() (string, error) {
 	C.free(unsafe.Pointer(result))
 	return path, nil
 }
+
+func (v *VirStorageVol) GetXMLDesc(flags uint32) (string, error) {
+	result := C.virStorageVolGetXMLDesc(v.ptr, C.uint(flags))
+	if result == nil {
+		return "", errors.New(GetLastError())
+	}
+	xml := C.GoString(result)
+	C.free(unsafe.Pointer(result))
+	return xml, nil
+}
