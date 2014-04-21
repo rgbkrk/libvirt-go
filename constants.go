@@ -84,3 +84,30 @@ const (
 	VIR_DOMAIN_DEVICE_MODIFY_LIVE    = C.VIR_DOMAIN_AFFECT_LIVE
 	VIR_DOMAIN_DEVICE_MODIFY_FORCE   = C.VIR_DOMAIN_DEVICE_MODIFY_FORCE
 )
+
+// virStorageVolCreateFlags
+const (
+	VIR_STORAGE_VOL_CREATE_PREALLOC_METADATA = C.VIR_STORAGE_VOL_CREATE_PREALLOC_METADATA
+)
+
+// virStorageVolDeleteFlags
+const (
+	VIR_STORAGE_VOL_DELETE_NORMAL = C.VIR_STORAGE_VOL_DELETE_NORMAL // Delete metadata only (fast)
+	VIR_STORAGE_VOL_DELETE_ZEROED = C.VIR_STORAGE_VOL_DELETE_ZEROED // Clear all data to zeros (slow)
+)
+
+// virStorageVolResizeFlags
+const (
+	VIR_STORAGE_VOL_RESIZE_ALLOCATE = C.VIR_STORAGE_VOL_RESIZE_ALLOCATE // force allocation of new size
+	VIR_STORAGE_VOL_RESIZE_DELTA    = C.VIR_STORAGE_VOL_RESIZE_DELTA    // size is relative to current
+	VIR_STORAGE_VOL_RESIZE_SHRINK   = C.VIR_STORAGE_VOL_RESIZE_SHRINK   // allow decrease in capacity
+)
+
+// virStorageVolType
+const (
+	VIR_STORAGE_VOL_FILE    = C.VIR_STORAGE_VOL_FILE    // Regular file based volumes
+	VIR_STORAGE_VOL_BLOCK   = C.VIR_STORAGE_VOL_BLOCK   // Block based volumes
+	VIR_STORAGE_VOL_DIR     = C.VIR_STORAGE_VOL_DIR     // Directory-passthrough based volume
+	VIR_STORAGE_VOL_NETWORK = C.VIR_STORAGE_VOL_NETWORK //Network volumes like RBD (RADOS Block Device)
+	VIR_STORAGE_VOL_NETDIR  = C.VIR_STORAGE_VOL_NETDIR  // Network accessible directory that can contain other network volumes
+)
