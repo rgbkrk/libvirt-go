@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func testStorageVolXML(volName, poolName string) string {
+func testStorageVolXML(volName, poolPath string) string {
 	defName := volName
 	if defName == "" {
 		defName = time.Now().String()
@@ -15,7 +15,7 @@ func testStorageVolXML(volName, poolName string) string {
         <allocation>0</allocation>
         <capacity unit="M">10</capacity>
         <target>
-          <path>` + "/" + poolName + "/" + defName + `</path>
+          <path>` + "/" + poolPath + "/" + defName + `</path>
           <permissions>
             <owner>107</owner>
             <group>107</group>

@@ -111,3 +111,16 @@ const (
 	VIR_STORAGE_VOL_NETWORK = C.VIR_STORAGE_VOL_NETWORK //Network volumes like RBD (RADOS Block Device)
 	VIR_STORAGE_VOL_NETDIR  = C.VIR_STORAGE_VOL_NETDIR  // Network accessible directory that can contain other network volumes
 )
+
+// virStorageVolWipeAlgorithm
+const (
+	VIR_STORAGE_VOL_WIPE_ALG_ZERO       = C.VIR_STORAGE_VOL_WIPE_ALG_ZERO       // 1-pass, all zeroes
+	VIR_STORAGE_VOL_WIPE_ALG_NNSA       = C.VIR_STORAGE_VOL_WIPE_ALG_NNSA       // 4-pass NNSA Policy Letter NAP-14.1-C (XVI-8)
+	VIR_STORAGE_VOL_WIPE_ALG_DOD        = C.VIR_STORAGE_VOL_WIPE_ALG_DOD        // 4-pass DoD 5220.22-M section 8-306 procedure
+	VIR_STORAGE_VOL_WIPE_ALG_BSI        = C.VIR_STORAGE_VOL_WIPE_ALG_BSI        // 9-pass method recommended by the German Center of Security in Information Technologies
+	VIR_STORAGE_VOL_WIPE_ALG_GUTMANN    = C.VIR_STORAGE_VOL_WIPE_ALG_GUTMANN    // The canonical 35-pass sequence
+	VIR_STORAGE_VOL_WIPE_ALG_SCHNEIER   = C.VIR_STORAGE_VOL_WIPE_ALG_SCHNEIER   // 7-pass method described by Bruce Schneier in "Applied Cryptography" (1996)
+	VIR_STORAGE_VOL_WIPE_ALG_PFITZNER7  = C.VIR_STORAGE_VOL_WIPE_ALG_PFITZNER7  // 7-pass random
+	VIR_STORAGE_VOL_WIPE_ALG_PFITZNER33 = C.VIR_STORAGE_VOL_WIPE_ALG_PFITZNER33 // 33-pass random
+	VIR_STORAGE_VOL_WIPE_ALG_RANDOM     = C.VIR_STORAGE_VOL_WIPE_ALG_RANDOM     // 1-pass random
+)

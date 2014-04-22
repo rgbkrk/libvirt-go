@@ -47,10 +47,9 @@ func (v *VirStorageVol) GetInfo() (VirStorageVolInfo, error) {
 	return vi, nil
 }
 
-// TODO: "type" is a builtin type in Go.Won't compile
-//func (i *VirStorageVolInfo) GetType() int {
-//	return int(i.ptr.type)
-//}
+func (i *VirStorageVolInfo) GetType() int {
+	return int(i.ptr._type)
+}
 
 func (i *VirStorageVolInfo) GetCapacityInBytes() uint64 {
 	return uint64(i.ptr.capacity)
@@ -94,4 +93,27 @@ func (v *VirStorageVol) GetXMLDesc(flags uint32) (string, error) {
 	xml := C.GoString(result)
 	C.free(unsafe.Pointer(result))
 	return xml, nil
+}
+
+func (v *VirStorageVol) Resize(capacity uint64, flags uint32) error {
+	result := C.virStorageVolResize(v.ptr, C.ulonglong(capacity), C.uint(flags))
+	if result == -1 {
+		return errors.New(GetLastError())
+	}
+	return nil
+}
+
+func (v *VirStorageVol) Wipe(flags uint32) error {
+	result := C.virStorageVolWipe(v.ptr, C.uint(flags))
+	if result == -1 {
+		return errors.New(GetLastError())
+	}
+	return nil
+}
+func (v *VirStorageVol) WipePattern(algorithm uint32, flags uint32) error {
+	result := C.virStorageVolWipePattern(v.ptr, C.uint(algorithm), C.uint(flags))
+	if result == -1 {
+		return errors.New(GetLastError())
+	}
+	return nil
 }

@@ -581,10 +581,10 @@ func TestLookupStorageVolByKey(t *testing.T) {
 		return
 	}
 	defer pool.Destroy()
-	defPoolName := "default-pool"
+	defPoolPath := "default-pool"
 	defVolName := time.Now().String()
-	defKey := "/" + defPoolName + "/" + defVolName
-	vol, err := pool.StorageVolCreateXML(testStorageVolXML(defVolName, defPoolName), 0)
+	defVolKey := "/" + defPoolPath + "/" + defVolName
+	vol, err := pool.StorageVolCreateXML(testStorageVolXML(defVolName, defPoolPath), 0)
 	if err != nil {
 		t.Error(err)
 		return
@@ -593,7 +593,7 @@ func TestLookupStorageVolByKey(t *testing.T) {
 		vol.Delete(VIR_STORAGE_VOL_DELETE_NORMAL)
 		vol.Free()
 	}()
-	vol, err = conn.LookupStorageVolByKey(defKey)
+	vol, err = conn.LookupStorageVolByKey(defVolKey)
 	if err != nil {
 		t.Error(err)
 		return
@@ -603,8 +603,8 @@ func TestLookupStorageVolByKey(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if key != defKey {
-		t.Fatalf("expected storage volume key: %s ,got: %s", defKey, key)
+	if key != defVolKey {
+		t.Fatalf("expected storage volume key: %s ,got: %s", defVolKey, key)
 	}
 }
 
@@ -620,10 +620,10 @@ func TestLookupStorageVolByPath(t *testing.T) {
 		return
 	}
 	defer pool.Destroy()
-	defPoolName := "default-pool"
+	defPoolPath := "default-pool"
 	defVolName := time.Now().String()
-	defPath := "/" + defPoolName + "/" + defVolName
-	vol, err := pool.StorageVolCreateXML(testStorageVolXML(defVolName, defPoolName), 0)
+	defVolPath := "/" + defPoolPath + "/" + defVolName
+	vol, err := pool.StorageVolCreateXML(testStorageVolXML(defVolName, defPoolPath), 0)
 	if err != nil {
 		t.Error(err)
 		return
@@ -632,7 +632,7 @@ func TestLookupStorageVolByPath(t *testing.T) {
 		vol.Delete(VIR_STORAGE_VOL_DELETE_NORMAL)
 		vol.Free()
 	}()
-	vol, err = conn.LookupStorageVolByPath(defPath)
+	vol, err = conn.LookupStorageVolByPath(defVolPath)
 	if err != nil {
 		t.Error(err)
 		return
@@ -642,7 +642,7 @@ func TestLookupStorageVolByPath(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if path != defPath {
-		t.Fatalf("expected storage volume path: %s ,got: %s", defPath, path)
+	if path != defVolPath {
+		t.Fatalf("expected storage volume path: %s ,got: %s", defVolPath, path)
 	}
 }
