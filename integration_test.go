@@ -5,7 +5,6 @@ package libvirt
 import (
 	"io/ioutil"
 	"os"
-	"strings"
 	"testing"
 	"time"
 )
@@ -263,9 +262,21 @@ func TestStorageVolResize(t *testing.T) {
 		vol.Delete(VIR_STORAGE_VOL_DELETE_NORMAL)
 		vol.Free()
 	}()
-	const newCapacityInBytes = 12582912
-	if err := vol.Resize(newCapacityInBytes, VIR_STORAGE_VOL_RESIZE_ALLOCATE); err != nil {
+	info, err := vol.GetInfo()
+	if err != nil {
 		t.Fatal(err)
+	}
+	oldCapacity := info.GetCapacityInBytes()
+	const deltaBytes = 2097152
+	if err := vol.Resize(deltaBytes, VIR_STORAGE_VOL_RESIZE_DELTA); err != nil {
+		t.Fatal(err)
+	}
+	info, err = vol.GetInfo()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if i := info.GetCapacityInBytes(); i != oldCapacity+deltaBytes {
+		t.Fatalf("Resize failed, wanted %d, got %d", (oldCapacity + deltaBytes), i)
 	}
 }
 
