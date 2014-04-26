@@ -52,3 +52,29 @@ func (s *VirSecret) GetUUIDString() (string, error) {
 	return C.GoString((*C.char)(cuidPtr)), nil
 }
 
+func (s *VirSecret) GetUsageID() (string, error) {
+	result := C.virSecretGetUsageID(s.ptr)
+	if result == nil {
+		return "", errors.New(GetLastError())
+	}
+	return C.GoString(result), nil
+}
+
+func (s *VirSecret) GetUsageType() (int, error) {
+	result := int(C.virSecretGetUsageType(s.ptr))
+	if result == -1 {
+		return 0, errors.New(GetLastError())
+	}
+	return result, nil
+}
+
+func (s *VirSecret) GetXMLDesc(flags uint32) (string, error) {
+	result := C.virSecretGetXMLDesc(s.ptr, C.uint(flags))
+	if result == nil {
+		return "", errors.New(GetLastError())
+	}
+	xml := C.GoString(result)
+	C.free(unsafe.Pointer(result))
+	return xml, nil
+}
+
