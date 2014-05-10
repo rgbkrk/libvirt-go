@@ -54,63 +54,6 @@ func TestGetDomainName(t *testing.T) {
 	}
 }
 
-func TesGetDomainCPUStats(t *testing.T) {
-	dom, conn := buildTestDomain()
-	defer func() {
-		dom.Undefine()
-		dom.Free()
-		conn.CloseConnection()
-	}()
-	ncpus, err := dom.GetCPUStats(nil, 0, 0, 0, 0)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if ncpus != 1 {
-		t.Error("Number of CPUs should be 1")
-		return
-	}
-
-	nparams, err := dom.GetCPUStats(nil, 0, 0, 1, 0)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if nparams != 2 {
-		t.Error("Number of parameters for this hypervisor should be 2")
-		return
-	}
-
-	var params VirTypedParameters
-	if _, err = dom.GetCPUStats(&params, nparams, 0, uint32(ncpus), 0); err != nil {
-		t.Error(err)
-		return
-	}
-	// on kvm/qemu, gives cpu time and vcpu time
-}
-
-func TesGetInterfaceParameters(t *testing.T) {
-	dom, conn := buildTestDomain()
-	defer func() {
-		dom.Undefine()
-		dom.Free()
-		conn.CloseConnection()
-	}()
-	iface := "either mac or path to interface"
-	nparams := int(0)
-	if _, err := dom.GetInterfaceParameters(iface, nil, &nparams, 0); err != nil {
-		t.Error(err)
-		return
-	}
-
-	var params VirTypedParameters
-	if _, err := dom.GetInterfaceParameters(iface, &params, &nparams, 0); err != nil {
-		t.Error(err)
-		return
-	}
-	// on kvm/qemu, gives essentialy the same infos as virDomainInterfaceStats
-}
-
 func TestGetDomainState(t *testing.T) {
 	dom, conn := buildTestDomain()
 	defer func() {

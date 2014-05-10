@@ -11,6 +11,7 @@ import "C"
 import (
 	"errors"
 	"reflect"
+	"strings"
 	"unsafe"
 )
 
@@ -44,6 +45,9 @@ func (dest *VirTypedParameters) loadFromCPtr(params C.virTypedParameterPtr, nPar
 	// there is probably a more elegant way to deal with that union
 	for _, rawParam := range rawParams {
 		name := C.GoStringN(&rawParam.field[0], C.VIR_TYPED_PARAM_FIELD_LENGTH)
+		if nbIdx := strings.Index(name, "\x00"); nbIdx != -1 {
+			name = name[:nbIdx]
+		}
 		switch rawParam._type {
 		case C.VIR_TYPED_PARAM_INT:
 			*dest = append(*dest, VirTypedParameter{name, int(*(*C.int)(unsafe.Pointer(&rawParam.value[0])))})
@@ -261,6 +265,7 @@ func (d *VirDomain) GetCPUStats(params *VirTypedParameters, nParams int, startCp
 	return result, nil
 }
 
+// Warning: No test written for this function
 func (d *VirDomain) GetInterfaceParameters(device string, params *VirTypedParameters, nParams *int, flags uint32) (int, error) {
 	var cParams C.virTypedParameterPtr
 
