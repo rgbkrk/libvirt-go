@@ -648,3 +648,30 @@ func TestIntegrationLookupSecretByUsage(t *testing.T) {
 	}
 }
 
+func TestListAllInterfaces(t *testing.T) {
+	conn, err := NewVirConnection("lxc:///")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer conn.CloseConnection()
+	ifaces, err := conn.ListAllInterfaces(0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lookingFor := "lo"
+	found := false
+	for _, iface := range ifaces {
+		name, err := iface.GetName()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if name == lookingFor {
+			found = true
+			break
+		}
+	}
+	if found == false {
+		t.Fatalf("interface %s not found", lookingFor)
+	}
+}
