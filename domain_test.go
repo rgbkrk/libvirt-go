@@ -1,6 +1,8 @@
 package libvirt
 
 import (
+	"image/png"
+	"strings"
 	"testing"
 	"time"
 )
@@ -435,5 +437,40 @@ func TesDomainDestoryFlags(t *testing.T) {
 	if state[0] != 5 || state[1] != 1 {
 		t.Fatal("state should be [5 1]")
 		return
+	}
+}
+
+func TestDomainScreenshot(t *testing.T) {
+	dom, conn := buildTestDomain()
+	defer func() {
+		dom.Free()
+		conn.CloseConnection()
+	}()
+	if err := dom.Create(); err != nil {
+		t.Error(err)
+		return
+	}
+	stream, err := NewVirStream(&conn, 0)
+	if err != nil {
+		t.Fatalf("failed to create new stream: %s", err)
+	}
+	defer stream.Free()
+	mime, err := dom.Screenshot(stream, 0, 0)
+	if err != nil {
+		t.Fatalf("failed to take screenshot: %s", err)
+	}
+	if strings.Index(mime, "image/") != 0 {
+		t.Fatalf("Wanted image/*, got %s", mime)
+	}
+	decoded, err := png.Decode(stream)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := stream.Finish(); err != nil {
+		t.Fatal(err)
+	}
+	size := decoded.Bounds().Size()
+	if size.X == 0 || size.Y == 0 {
+		t.Fatal("Size wrong", size)
 	}
 }

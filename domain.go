@@ -454,6 +454,26 @@ func (d *VirDomain) DetachDeviceFlags(xml string, flags uint) error {
 	return nil
 }
 
+func (d *VirDomain) Screenshot(stream *VirStream, screen, flags uint) (string, error) {
+	cType := C.virDomainScreenshot(d.ptr, stream.ptr, C.uint(screen), C.uint(flags))
+	if cType == nil {
+		return "", errors.New(GetLastError())
+	}
+	defer C.free(unsafe.Pointer(cType))
+
+	mimeType := C.GoString(cType)
+	return mimeType, nil
+}
+
+func (d *VirDomain) SendKey(codeset, holdtime uint, keycodes []uint, flags uint) error {
+	result := C.virDomainSendKey(d.ptr, C.uint(codeset), C.uint(holdtime), (*C.uint)(unsafe.Pointer(&keycodes[0])), C.int(len(keycodes)), C.uint(flags))
+	if result == -1 {
+		return errors.New(GetLastError())
+	}
+
+	return nil
+}
+
 func (d *VirDomain) BlockStatsFlags(disk string, params *VirTypedParameters, nParams int, flags uint32) (int, error) {
 	var cParams C.virTypedParameterPtr
 	cDisk := C.CString(disk)
