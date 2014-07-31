@@ -453,3 +453,29 @@ func (d *VirDomain) DetachDeviceFlags(xml string, flags uint) error {
 	}
 	return nil
 }
+
+func (d *VirDomain) BlockStatsFlags(disk string, params *VirTypedParameters, nParams int, flags uint32) (int, error) {
+	var cParams C.virTypedParameterPtr
+	cDisk := C.CString(disk)
+	defer C.free(unsafe.Pointer(cDisk))
+
+	cParamsLen := C.int(nParams)
+
+	if params != nil && nParams > 0 {
+		cParams = (C.virTypedParameterPtr)(C.calloc(C.size_t(nParams), C.size_t(unsafe.Sizeof(C.struct__virTypedParameter{}))))
+		defer C.virTypedParamsFree(cParams, cParamsLen)
+	} else {
+		cParams = nil
+	}
+
+	result := int(C.virDomainBlockStatsFlags(d.ptr, cDisk, (C.virTypedParameterPtr)(cParams), &cParamsLen, C.uint(flags)))
+	if result == -1 {
+		return result, errors.New(GetLastError())
+	}
+
+	if cParamsLen > 0 && params != nil {
+		params.loadFromCPtr(cParams, nParams)
+	}
+
+	return int(cParamsLen), nil
+}
