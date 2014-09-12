@@ -25,7 +25,7 @@ type VirStoragePoolInfo struct {
 func (p *VirStoragePool) Build(flags uint32) error {
 	result := C.virStoragePoolBuild(p.ptr, C.uint(flags))
 	if result == -1 {
-		return errors.New(GetLastError())
+		return GetLastError()
 	}
 	return nil
 }
@@ -33,7 +33,7 @@ func (p *VirStoragePool) Build(flags uint32) error {
 func (p *VirStoragePool) Create(flags uint32) error {
 	result := C.virStoragePoolCreate(p.ptr, C.uint(flags))
 	if result == -1 {
-		return errors.New(GetLastError())
+		return GetLastError()
 	}
 	return nil
 }
@@ -41,7 +41,7 @@ func (p *VirStoragePool) Create(flags uint32) error {
 func (p *VirStoragePool) Delete(flags uint32) error {
 	result := C.virStoragePoolDelete(p.ptr, C.uint(flags))
 	if result == -1 {
-		return errors.New(GetLastError())
+		return GetLastError()
 	}
 	return nil
 }
@@ -49,14 +49,14 @@ func (p *VirStoragePool) Delete(flags uint32) error {
 func (p *VirStoragePool) Destroy() error {
 	result := C.virStoragePoolDestroy(p.ptr)
 	if result == -1 {
-		return errors.New(GetLastError())
+		return GetLastError()
 	}
 	return nil
 }
 
 func (p *VirStoragePool) Free() error {
 	if result := C.virStoragePoolFree(p.ptr); result != 0 {
-		return errors.New(GetLastError())
+		return GetLastError()
 	}
 	return nil
 }
@@ -65,7 +65,7 @@ func (p *VirStoragePool) GetAutostart() (bool, error) {
 	var out C.int
 	result := C.virStoragePoolGetAutostart(p.ptr, (*C.int)(unsafe.Pointer(&out)))
 	if result == -1 {
-		return false, errors.New(GetLastError())
+		return false, GetLastError()
 	}
 	switch out {
 	case 1:
@@ -80,7 +80,7 @@ func (p *VirStoragePool) GetInfo() (VirStoragePoolInfo, error) {
 	var ptr C.virStoragePoolInfo
 	result := C.virStoragePoolGetInfo(p.ptr, (*C.virStoragePoolInfo)(unsafe.Pointer(&ptr)))
 	if result == -1 {
-		return pi, errors.New(GetLastError())
+		return pi, GetLastError()
 	}
 	pi.ptr = ptr
 	return pi, nil
@@ -89,7 +89,7 @@ func (p *VirStoragePool) GetInfo() (VirStoragePoolInfo, error) {
 func (p *VirStoragePool) GetName() (string, error) {
 	name := C.virStoragePoolGetName(p.ptr)
 	if name == nil {
-		return "", errors.New(GetLastError())
+		return "", GetLastError()
 	}
 	return C.GoString(name), nil
 }
@@ -99,7 +99,7 @@ func (p *VirStoragePool) GetUUID() ([]byte, error) {
 	cuidPtr := unsafe.Pointer(&cUuid)
 	result := C.virStoragePoolGetUUID(p.ptr, (*C.uchar)(cuidPtr))
 	if result != 0 {
-		return []byte{}, errors.New(GetLastError())
+		return []byte{}, GetLastError()
 	}
 	return C.GoBytes(cuidPtr, C.VIR_UUID_BUFLEN), nil
 }
@@ -109,7 +109,7 @@ func (p *VirStoragePool) GetUUIDString() (string, error) {
 	cuidPtr := unsafe.Pointer(&cUuid)
 	result := C.virStoragePoolGetUUIDString(p.ptr, (*C.char)(cuidPtr))
 	if result != 0 {
-		return "", errors.New(GetLastError())
+		return "", GetLastError()
 	}
 	return C.GoString((*C.char)(cuidPtr)), nil
 }
@@ -117,7 +117,7 @@ func (p *VirStoragePool) GetUUIDString() (string, error) {
 func (p *VirStoragePool) GetXMLDesc(flags uint32) (string, error) {
 	result := C.virStoragePoolGetXMLDesc(p.ptr, C.uint(flags))
 	if result == nil {
-		return "", errors.New(GetLastError())
+		return "", GetLastError()
 	}
 	xml := C.GoString(result)
 	C.free(unsafe.Pointer(result))
@@ -127,7 +127,7 @@ func (p *VirStoragePool) GetXMLDesc(flags uint32) (string, error) {
 func (p *VirStoragePool) IsActive() (bool, error) {
 	result := C.virStoragePoolIsActive(p.ptr)
 	if result == -1 {
-		return false, errors.New(GetLastError())
+		return false, GetLastError()
 	}
 	if result == 1 {
 		return true, nil
@@ -145,7 +145,7 @@ func (p *VirStoragePool) SetAutostart(autostart bool) error {
 	}
 	result := C.virStoragePoolSetAutostart(p.ptr, cAutostart)
 	if result == -1 {
-		return errors.New(GetLastError())
+		return GetLastError()
 	}
 	return nil
 }
@@ -153,7 +153,7 @@ func (p *VirStoragePool) SetAutostart(autostart bool) error {
 func (p *VirStoragePool) Refresh(flags uint32) error {
 	result := C.virStoragePoolRefresh(p.ptr, C.uint(flags))
 	if result == -1 {
-		return errors.New(GetLastError())
+		return GetLastError()
 	}
 	return nil
 }
@@ -161,7 +161,7 @@ func (p *VirStoragePool) Refresh(flags uint32) error {
 func (p *VirStoragePool) Undefine() error {
 	result := C.virStoragePoolUndefine(p.ptr)
 	if result == -1 {
-		return errors.New(GetLastError())
+		return GetLastError()
 	}
 	return nil
 }
@@ -195,7 +195,7 @@ func (p *VirStoragePool) StorageVolCreateXML(xmlConfig string, flags uint32) (Vi
 	defer C.free(unsafe.Pointer(cXml))
 	ptr := C.virStorageVolCreateXML(p.ptr, cXml, C.uint(flags))
 	if ptr == nil {
-		return VirStorageVol{}, errors.New(GetLastError())
+		return VirStorageVol{}, GetLastError()
 	}
 	return VirStorageVol{ptr: ptr}, nil
 }
@@ -205,7 +205,7 @@ func (p *VirStoragePool) LookupStorageVolByName(name string) (VirStorageVol, err
 	defer C.free(unsafe.Pointer(cName))
 	ptr := C.virStorageVolLookupByName(p.ptr, cName)
 	if ptr == nil {
-		return VirStorageVol{}, errors.New(GetLastError())
+		return VirStorageVol{}, GetLastError()
 	}
 	return VirStorageVol{ptr: ptr}, nil
 }
