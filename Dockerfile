@@ -18,6 +18,10 @@ ENV PATH    /go/bin:/usr/local/go/bin:$PATH
 ENV GOPATH  /go:/go/src/github.com/docker/docker/vendor
 RUN cd /usr/local/go/src && ./make.bash --no-clean 2>&1
 
+# Setup the network properly
+RUN /bin/echo -e 'auto lo\niface lo inet loopback\nallow-hotplug eth0\niface eth0 inet dhcp\n' \
+    >/etc/network/interfaces
+
 WORKDIR	/libvirt-go
 COPY . /libvirt-go
 
