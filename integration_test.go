@@ -668,14 +668,19 @@ func TestIntegrationGetDomainCPUStats(t *testing.T) {
 	}
 	defer dom.Destroy()
 
+    nodeinfo, err := conn.GetNodeInfo()
+    if err != nil {
+		t.Fatal(err)
+    }
+
 	// ... if @params is NULL and @nparams is 0 and @ncpus is 0, the
 	// number of cpus available to query is returned. From the host perspective,
 	ncpus, err := dom.GetCPUStats(nil, 0, 0, 0, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if ncpus != 1 {
-		t.Fatal("Number of CPUs should be 1")
+	if ncpus != int(nodeinfo.GetCPUs()) {
+		t.Fatal("LXC guest number of CPUs should equals the host number of CPUs")
 	}
 
 	// ... if @params is NULL and @nparams is 0 and @ncpus is 1,
@@ -696,8 +701,8 @@ func TestIntegrationGetDomainCPUStats(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(params) != lxcNumParams {
-		t.Fatalf("Wanted %d returned parameters, got %d", lxcNumParams, len(params))
+	if len(params) != int(nodeinfo.GetCPUs()) {
+		t.Fatalf("Wanted %d returned parameters, got %d", int(nodeinfo.GetCPUs()), len(params))
 	}
 	param := params[0]
 	if param.Name != lxcParamName {
