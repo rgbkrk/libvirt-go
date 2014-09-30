@@ -325,3 +325,11 @@ func eventHandleCallback(watch int, fd int, events int, opaque unsafe.Pointer) {
 	handle := *(*EventHandle)(opaque)
 	(*handle.cb)(&handle, uintptr(fd), events, handle.f)
 }
+
+//export streamEventCallback
+func streamEventCallback(s C.virStreamPtr, events int, opaque unsafe.Pointer) int {
+	context := *(*streamEventContext)(opaque)
+	stream := VirStream{ptr: s}
+	ret := (*context.cb)(&stream, events, context.f)
+	return int(ret)
+}

@@ -97,5 +97,10 @@ void eventHandleCallback_cgo(int watch, int fd, int events, void *opaque)
 {
     eventHandleCallback(watch, fd, events, opaque);
 }
+
+int streamEventCallback_cgo(virStreamPtr stream, int events, void *opaque)
+{
+    return streamEventCallback(stream, events, opaque);
+}
 */
 import "C"

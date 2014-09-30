@@ -5,6 +5,8 @@ package libvirt
 #include <libvirt/libvirt.h>
 #include <libvirt/virterror.h>
 #include <stdlib.h>
+
+int streamEventCallback_cgo(virStreamPtr stream, int events, void *opaque);
 */
 import "C"
 import (
@@ -76,4 +78,39 @@ func (v *VirStream) Write(p []byte) (int, error) {
 	}
 
 	return int(n), nil
+}
+
+type VirStreamEventCallback func(s *VirStream, events int, f func()) int
+
+type streamEventContext struct {
+	cb *VirStreamEventCallback
+	f  func()
+}
+
+func (v *VirStream) EventAddCallback(events int, cb *VirStreamEventCallback, f func()) error {
+	context := streamEventContext{cb: cb, f: f}
+
+	callbackPtr := unsafe.Pointer(C.streamEventCallback_cgo)
+	ret := C.virStreamEventAddCallback(v.ptr, C.int(events),
+		C.virStreamEventCallback(callbackPtr), unsafe.Pointer(&context), nil)
+	if int(ret) < 0 {
+		return GetLastError()
+	}
+	return nil
+}
+
+func (v *VirStream) EventUpdateCallback(events int) error {
+	ret := C.virStreamEventUpdateCallback(v.ptr, C.int(events))
+	if int(ret) < 0 {
+		return GetLastError()
+	}
+	return nil
+}
+
+func (v *VirStream) EventRemoveCallback() error {
+	ret := C.virStreamEventRemoveCallback(v.ptr)
+	if int(ret) < 0 {
+		return GetLastError()
+	}
+	return nil
 }
