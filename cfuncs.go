@@ -92,5 +92,10 @@ int domainEventDeviceRemovedCallback_cgo(virConnectPtr c, virDomainPtr d,
 {
     return domainEventDeviceRemovedCallback(c, d, devAlias, data);
 }
+
+void eventHandleCallback_cgo(int watch, int fd, int events, void *opaque)
+{
+    eventHandleCallback(watch, fd, events, opaque);
+}
 */
 import "C"
