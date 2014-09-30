@@ -527,3 +527,16 @@ func (d *VirDomain) BlockStatsFlags(disk string, params *VirTypedParameters, nPa
 
 	return int(cParamsLen), nil
 }
+
+func (d *VirDomain) OpenConsole(devName string, stream *VirStream, flags uint) error {
+	var cDevName *C.char = nil
+	if len(devName) > 0 {
+		cDevName = C.CString(devName)
+		defer C.free(unsafe.Pointer(cDevName))
+	}
+	ret := C.virDomainOpenConsole(d.ptr, cDevName, stream.ptr, C.uint(flags))
+	if ret < 0 {
+		return GetLastError()
+	}
+	return nil
+}
