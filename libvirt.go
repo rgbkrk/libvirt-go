@@ -865,6 +865,14 @@ func (c *VirConnection) DomainEventDeregister(callbackId int) int {
 	return int(C.virConnectDomainEventDeregisterAny(c.ptr, C.int(callbackId)))
 }
 
+func (c *VirConnection) SetKeepAlive(interval int, count uint) error {
+	ret := C.virConnectSetKeepAlive(c.ptr, C.int(interval), C.uint(count))
+	if ret < 0 {
+		return GetLastError()
+	}
+	return nil
+}
+
 type EventHandleCallback func(e *EventHandle, fd uintptr, events int, f func())
 
 type EventHandle struct {
