@@ -57,6 +57,8 @@ int domainEventBalloonChangeCallback_cgo(virConnectPtr c, virDomainPtr d,
 
 int domainEventDeviceRemovedCallback_cgo(virConnectPtr c, virDomainPtr d,
                                          const char *devAlias, void* data);
+
+void eventHandleCallback_cgo(int watch, int fd, int events, void *opaque);
 */
 import "C"
 
@@ -867,6 +869,46 @@ func (c *VirConnection) DomainEventRegister(dom VirDomain,
 func (c *VirConnection) DomainEventDeregister(callbackId int) int {
 	// Deregister the callback
 	return int(C.virConnectDomainEventDeregisterAny(c.ptr, C.int(callbackId)))
+}
+
+func (c *VirConnection) SetKeepAlive(interval int, count uint) error {
+	ret := C.virConnectSetKeepAlive(c.ptr, C.int(interval), C.uint(count))
+	if ret < 0 {
+		return GetLastError()
+	}
+	return nil
+}
+
+type EventHandleCallback func(e *EventHandle, fd uintptr, events int, f func())
+
+type EventHandle struct {
+	Watch int
+	cb    *EventHandleCallback
+	f     func()
+}
+
+func NewEventHandle(fd uintptr, events int, cb *EventHandleCallback, f func()) *EventHandle {
+	handle := EventHandle{
+		cb: cb,
+		f:  f,
+	}
+	callbackPtr := unsafe.Pointer(C.eventHandleCallback_cgo)
+	handle.Watch = int(C.virEventAddHandle(C.int(fd), C.int(events),
+		C.virEventHandleCallback(callbackPtr),
+		unsafe.Pointer(&handle), nil))
+
+	if handle.Watch < 0 {
+		return nil
+	}
+	return &handle
+}
+
+func (e *EventHandle) EventUpdateHandle(events int) {
+	C.virEventUpdateHandle(C.int(e.Watch), C.int(events))
+}
+
+func (e *EventHandle) Free() int {
+	return int(C.virEventRemoveHandle(C.int(e.Watch)))
 }
 
 func EventRegisterDefaultImpl() int {

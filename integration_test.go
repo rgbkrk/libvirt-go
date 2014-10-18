@@ -10,17 +10,26 @@ import (
 	"time"
 )
 
-func defineTestLxcDomain(conn VirConnection, title string) (VirDomain, error) {
+func defineTestLxcDomainWithCmd(conn VirConnection, title string,
+	cmd string, args []string) (VirDomain, error) {
+
 	if title == "" {
 		title = time.Now().String()
 	}
+
+	argsStr := ""
+	for _, arg := range args {
+		argsStr += "    <initarg>" + arg + "</initarg>\n"
+	}
+
 	xml := `<domain type='lxc'>
 	  <name>` + title + `</name>
 	  <title>` + title + `</title>
 	  <memory>102400</memory>
 	  <os>
 	    <type>exe</type>
-	    <init>/bin/sh</init>
+	    <init>` + cmd + `</init>
+        ` + argsStr + `
 	  </os>
 	  <devices>
 	    <console type='pty'/>
@@ -28,6 +37,10 @@ func defineTestLxcDomain(conn VirConnection, title string) (VirDomain, error) {
 	</domain>`
 	dom, err := conn.DomainDefineXML(xml)
 	return dom, err
+}
+
+func defineTestLxcDomain(conn VirConnection, title string) (VirDomain, error) {
+	return defineTestLxcDomainWithCmd(conn, title, "/bin/sh", []string{})
 }
 
 // Integration tests are run against LXC using Libvirt 1.2.x

@@ -1,6 +1,7 @@
 package libvirt
 
 import (
+	"io/ioutil"
 	"testing"
 	"time"
 )
@@ -870,4 +871,74 @@ func TestDomainEventRegister(t *testing.T) {
 		t.Fatal("Event deregistration failed")
 	}
 	callbackId = -1 // Don't deregister twice
+}
+
+func TestEventHandle(t *testing.T) {
+
+	EventRegisterDefaultImpl()
+
+	// Create a test file to monitor
+	file, err := ioutil.TempFile("", "TestEventHandle")
+	if err != nil {
+		t.Error(err)
+	}
+
+	nbEvents := 0
+	nbReadable := 0
+	nbWritable := 0
+	nbError := 0
+	nbHangup := 0
+	events := VIR_EVENT_HANDLE_READABLE | VIR_EVENT_HANDLE_WRITABLE
+	cb := EventHandleCallback(
+		func(e *EventHandle, fd uintptr, events int, f func()) {
+			switch events {
+			case VIR_EVENT_HANDLE_ERROR:
+				nbError++
+			case VIR_EVENT_HANDLE_HANGUP:
+				nbHangup++
+			default:
+				if (events & VIR_EVENT_HANDLE_READABLE) > 0 {
+					nbReadable++
+				}
+				if (events & VIR_EVENT_HANDLE_WRITABLE) > 0 {
+					nbWritable++
+				}
+			}
+
+			f()
+		},
+	)
+	handle := NewEventHandle(file.Fd(), events, &cb, func() {
+		nbEvents++
+	})
+	defer func() {
+		ret := handle.Free()
+		if ret < 0 {
+			t.Error("Failed to free EventHandle")
+		}
+	}()
+
+	EventRunDefaultImpl()
+
+	if nbEvents != 1 {
+		t.Errorf("Expected 1 events, got %d", nbEvents)
+	}
+
+	if nbReadable != 1 || nbWritable != 1 ||
+		nbError != 0 || nbHangup != 0 {
+		t.Errorf("Got %d readable, %d writeable, %d error, %d hangup events",
+			nbReadable, nbWritable, nbError, nbHangup)
+	}
+	nbReadable = 0
+	nbWritable = 0
+	nbEvents = 0
+
+	file.Close()
+	EventRunDefaultImpl()
+
+	if nbReadable != 0 || nbWritable != 0 ||
+		nbError != 1 || nbHangup != 0 {
+		t.Errorf("Got %d readable, %d writeable, %d error, %d hangup events",
+			nbReadable, nbWritable, nbError, nbHangup)
+	}
 }
