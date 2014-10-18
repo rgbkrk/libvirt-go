@@ -83,6 +83,15 @@ func NewVirConnection(uri string) (VirConnection, error) {
 	return obj, nil
 }
 
+func NewVirConnectionDefault() (VirConnection, error) {
+	ptr := C.virConnectOpen(nil)
+	if ptr == nil {
+		return VirConnection{}, GetLastError()
+	}
+	obj := VirConnection{ptr: ptr}
+	return obj, nil
+}
+
 func NewVirConnectionReadOnly(uri string) (VirConnection, error) {
 	var cUri *C.char
 	if uri != "" {
@@ -90,6 +99,15 @@ func NewVirConnectionReadOnly(uri string) (VirConnection, error) {
 		defer C.free(unsafe.Pointer(cUri))
 	}
 	ptr := C.virConnectOpenReadOnly(cUri)
+	if ptr == nil {
+		return VirConnection{}, GetLastError()
+	}
+	obj := VirConnection{ptr: ptr}
+	return obj, nil
+}
+
+func NewVirConnectionReadOnlyDefault() (VirConnection, error) {
+	ptr := C.virConnectOpenReadOnly(nil)
 	if ptr == nil {
 		return VirConnection{}, GetLastError()
 	}
