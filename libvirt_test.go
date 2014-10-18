@@ -2,6 +2,7 @@ package libvirt
 
 import (
 	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 )
@@ -882,6 +883,7 @@ func TestEventHandle(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	defer os.Remove(file.Name())
 
 	nbEvents := 0
 	nbReadable := 0
