@@ -4,7 +4,9 @@
 package libvirt
 
 import (
+	"sync"
 	"testing"
+	"time"
 )
 
 func TestStreamEvents(t *testing.T) {
@@ -28,10 +30,10 @@ func TestStreamEvents(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to define domain: %s", err)
 	}
-    defer func () {
-        dom.Destroy()
-        dom.Undefine()
-    } ()
+	defer func() {
+		dom.Destroy()
+		dom.Undefine()
+	}()
 
 	// Create the tested stream
 	stream, err := NewVirStream(&conn, VIR_STREAM_NONBLOCK)
@@ -41,7 +43,7 @@ func TestStreamEvents(t *testing.T) {
 	defer func() {
 		stream.Close()
 		stream.Free()
-	} ()
+	}()
 
 	// Start the domain
 	if err = dom.Create(); err != nil {
@@ -57,6 +59,7 @@ func TestStreamEvents(t *testing.T) {
 	var (
 		callback      VirStreamEventCallback
 		eventsCounter func()
+		mCount        sync.RWMutex // synchronize access to the nb variables
 
 		nbEvents   int = 0
 		nbReadable int = 0
@@ -66,6 +69,7 @@ func TestStreamEvents(t *testing.T) {
 	)
 	callback = VirStreamEventCallback(
 		func(s *VirStream, events int, f func()) int {
+			mCount.Lock()
 			switch events {
 			case VIR_EVENT_HANDLE_ERROR:
 				nbError++
@@ -79,6 +83,7 @@ func TestStreamEvents(t *testing.T) {
 					nbWritable++
 				}
 			}
+			mCount.Unlock()
 
 			f()
 			return 0
@@ -94,6 +99,8 @@ func TestStreamEvents(t *testing.T) {
 
 	// Test that it actually works
 	clearEvents := func() {
+		mCount.Lock()
+		defer mCount.Unlock()
 		nbReadable = 0
 		nbWritable = 0
 		nbError = 0
@@ -101,39 +108,71 @@ func TestStreamEvents(t *testing.T) {
 		nbEvents = 0
 	}
 
-	quit := false
-	lock := make(chan int)
+	quitCh := make(chan struct{})
+	lock := make(chan struct{})
+	defer close(quitCh)
+	defer close(lock)
+
+	// Event loop, send to lock on first callback
+	// and then do nothing until a count reset
 	go func() {
-		for !quit {
-			EventRunDefaultImpl()
-			if nbEvents == 1 {
-				lock <- 1
+		for {
+			select {
+			case <-quitCh:
+				return
+			default:
+				EventRunDefaultImpl()
+				mCount.Lock()
+				if nbEvents == 1 {
+					lock <- struct{}{}
+				}
+				mCount.Unlock()
 			}
 		}
 	}()
 
+	// Wait 2 seconds for a READABLE event to come in, or fail
+	timeoutDur := 2 * time.Second
+	timeout := time.AfterFunc(timeoutDur, func() {
+		t.Fatal("Timed out waiting for READABLE events")
+	})
 	<-lock
+	timeout.Stop()
+
+	mCount.RLock()
 	if nbReadable == 0 || nbWritable != 0 ||
 		nbError != 0 || nbHangup != 0 {
+		mCount.RUnlock()
 		t.Fatalf("Expected only readable events, got [%d, %d, %d, %d] "+
 			"read, write, error, hang up events",
 			nbReadable, nbWritable, nbError, nbHangup)
 	}
-	clearEvents()
+	mCount.RUnlock()
 
 	if err = stream.EventUpdateCallback(VIR_EVENT_HANDLE_WRITABLE); err != nil {
 		t.Fatalf("Failed to update callback: %s", err)
 	}
+	// Clear event count after we update the callback
+	clearEvents()
 
+	// Wait 2 seconds for a WRITEABLE event to come in, or fail
+	timeout = time.AfterFunc(timeoutDur, func() {
+		t.Fatal("Timed out waiting for WRITEABLE events")
+	})
 	<-lock
-	// Don't check for readable events, we may get some after the update
+	timeout.Stop()
+
+	mCount.RLock()
+	// TODO: nReadable incorrectly gets incremented after we're
+	// unsubscribed from it ...
 	if nbWritable == 0 || nbError != 0 || nbHangup != 0 {
+		defer mCount.RUnlock()
 		t.Fatalf("Expected writable events, got [%d, %d, %d, %d] "+
 			"read, write, error, hang up events",
 			nbReadable, nbWritable, nbError, nbHangup)
 	}
-	clearEvents()
-	quit = true
-	close(lock)
+	mCount.RUnlock()
 
+	// wait for event loop to quit
+	quitCh <- struct{}{}
 }
