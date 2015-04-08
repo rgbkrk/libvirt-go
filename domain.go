@@ -502,12 +502,16 @@ func (d *VirDomain) Screenshot(stream *VirStream, screen, flags uint) (string, e
 }
 
 func (d *VirDomain) SendKey(codeset, holdtime uint, keycodes []uint, flags uint) error {
-	result := C.virDomainSendKey(d.ptr, C.uint(codeset), C.uint(holdtime), (*C.uint)(unsafe.Pointer(&keycodes[0])), C.int(len(keycodes)), C.uint(flags))
+	resizedCodes := make([]C.uint, len(keycodes))
+	for i, code := range keycodes {
+		resizedCodes[i] = C.uint(code)
+	}
+	result := C.virDomainSendKey(d.ptr, C.uint(codeset), C.uint(holdtime), (*C.uint)(unsafe.Pointer(&resizedCodes[0])), C.int(len(keycodes)), C.uint(flags))
 	if result == -1 {
 		return GetLastError()
 	}
-
 	return nil
+
 }
 
 func (d *VirDomain) BlockStatsFlags(disk string, params *VirTypedParameters, nParams int, flags uint32) (int, error) {
