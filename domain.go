@@ -572,3 +572,25 @@ func (d *VirDomain) InterfaceStats(path string) (VirDomainInterfaceStats, error)
 		TxDrop:    int64(cStats.tx_drop),
 	}, nil
 }
+
+// Note: as golang dosn't proivde optional paramters to functions
+// and empty string in golang != C NULL, I had to make the if statment
+func (d *VirDomain) MigrateToURI(duri string, flags uint, dname string, bandwidth uint) error {
+	Cduri := C.CString(duri)
+	defer C.free(unsafe.Pointer(Cduri))
+	if dname == "" {
+		result := C.virDomainMigrateToURI(d.ptr, Cduri, C.ulong(flags), nil, C.ulong(bandwidth))
+		if result == -1 {
+			return GetLastError()
+		}
+		return nil
+	} else {
+		Cdname := C.CString(dname)
+		defer C.free(unsafe.Pointer(Cdname))
+		result := C.virDomainMigrateToURI(d.ptr, Cduri, C.ulong(flags), Cdname, C.ulong(bandwidth))
+		if result == -1 {
+			return GetLastError()
+		}
+		return nil
+	}
+}
