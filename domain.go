@@ -9,6 +9,8 @@ package libvirt
 import "C"
 
 import (
+	"fmt"
+	"net"
 	"reflect"
 	"strings"
 	"unsafe"
@@ -24,6 +26,10 @@ type VirDomainBlockInfo struct {
 
 type VirDomainInfo struct {
 	ptr C.virDomainInfo
+}
+
+type VirDomainInterface struct {
+	ptr C.virDomainInterfacePtr
 }
 
 type VirTypedParameter struct {
@@ -575,4 +581,53 @@ func (d *VirDomain) InterfaceStats(path string) (VirDomainInterfaceStats, error)
 		TxErrs:    int64(cStats.tx_errs),
 		TxDrop:    int64(cStats.tx_drop),
 	}, nil
+}
+
+func (d *VirDomain) InterfaceAddresses(source uint32, flags uint32) ([]VirDomainInterface, error) {
+	var cList *C.virDomainInterfacePtr
+	numIfaces := C.virDomainInterfaceAddresses(d.ptr, (**C.virDomainInterfacePtr)(&cList), C.uint(source), C.uint(flags))
+	if numIfaces == -1 {
+		return nil, GetLastError()
+	}
+	hdr := reflect.SliceHeader{
+		Data: uintptr(unsafe.Pointer(cList)),
+		Len:  int(numIfaces),
+		Cap:  int(numIfaces),
+	}
+	var ifaces []VirDomainInterface
+	slice := *(*[]C.virDomainInterfacePtr)(unsafe.Pointer(&hdr))
+	for _, ptr := range slice {
+		ifaces = append(ifaces, VirDomainInterface{ptr})
+	}
+	C.free(unsafe.Pointer(cList))
+	return ifaces, nil
+}
+
+func (i *VirDomainInterface) Name() string {
+	return C.GoString(i.ptr.name)
+}
+
+func (i *VirDomainInterface) HardwareAddr() net.HardwareAddr {
+	hw, err := net.ParseMAC(C.GoString(i.ptr.hwaddr))
+	if err != nil {
+		return nil
+	}
+	return hw
+}
+
+func (i *VirDomainInterface) Addrs() []string {
+	var addrs []string
+
+	hdr := reflect.SliceHeader{
+		Data: uintptr(unsafe.Pointer(i.ptr.addrs)),
+		Len:  int(i.ptr.naddrs),
+		Cap:  int(i.ptr.naddrs),
+	}
+	slice := *(*[]C.virDomainIPAddress)(unsafe.Pointer(&hdr))
+
+	for _, ptr := range slice {
+		addrs = append(addrs, fmt.Sprintf("%s/%d", C.GoString(ptr.addr), ptr.prefix))
+	}
+
+	return addrs
 }
