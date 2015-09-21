@@ -9,6 +9,7 @@ package libvirt
 import "C"
 
 import (
+	"log"
 	"reflect"
 	"strings"
 	"unsafe"
@@ -29,6 +30,18 @@ type VirDomainInfo struct {
 type VirTypedParameter struct {
 	Name  string
 	Value interface{}
+}
+
+type VirDomainMemoryStat struct {
+	Tag int32
+	Val uint64
+}
+
+type VirVcpuInfo struct {
+	Number  uint32
+	State   int32
+	CpuTime uint64
+	Cpu     int32
 }
 
 type VirTypedParameters []VirTypedParameter
@@ -571,4 +584,58 @@ func (d *VirDomain) InterfaceStats(path string) (VirDomainInterfaceStats, error)
 		TxErrs:    int64(cStats.tx_errs),
 		TxDrop:    int64(cStats.tx_drop),
 	}, nil
+}
+
+func (d *VirDomain) MemoryStats(nrStats uint32, flags uint32) ([]VirDomainMemoryStat, error) {
+	ptr := make([]C.virDomainMemoryStatStruct, nrStats)
+
+	result := C.virDomainMemoryStats(
+		d.ptr, (C.virDomainMemoryStatPtr)(unsafe.Pointer(&ptr[0])),
+		C.uint(nrStats), C.uint(flags))
+
+	if result == -1 {
+		return []VirDomainMemoryStat{}, GetLastError()
+	}
+
+	out := make([]VirDomainMemoryStat, result)
+	for i := 0; i < int(result); i++ {
+		out = append(out, VirDomainMemoryStat{
+			Tag: int32(ptr[i].tag),
+			Val: uint64(ptr[i].val),
+		})
+	}
+	return out, nil
+}
+
+func (d *VirDomain) GetVcpus(maxInfo int32) ([]VirVcpuInfo, error) {
+	ptr := make([]C.virVcpuInfo, maxInfo)
+
+	result := C.virDomainGetVcpus(
+		d.ptr, (C.virVcpuInfoPtr)(unsafe.Pointer(&ptr[0])),
+		C.int(maxInfo), nil, C.int(0))
+
+	if result == -1 {
+		return []VirVcpuInfo{}, GetLastError()
+	}
+
+	out := make([]VirVcpuInfo, 0)
+	for i := 0; i < int(result); i++ {
+		log.Println(i)
+		out = append(out, VirVcpuInfo{
+			Number:  uint32(ptr[i].number),
+			State:   int32(ptr[i].state),
+			CpuTime: uint64(ptr[i].cpuTime),
+			Cpu:     int32(ptr[i].cpu),
+		})
+	}
+
+	return out, nil
+}
+
+func (d *VirDomain) GetVcpusFlags(flags uint32) (int32, error) {
+	result := C.virDomainGetVcpusFlags(d.ptr, C.uint(flags))
+	if result == -1 {
+		return 0, GetLastError()
+	}
+	return int32(result), nil
 }
