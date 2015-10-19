@@ -1,0 +1,13 @@
+int domainEventLifecycleCallback (virConnectPtr c, virDomainPtr d, int event, int detail, void *data);
+int domainEventGenericCallback(virConnectPtr c, virDomainPtr d, void *data);
+int domainEventRTCChangeCallback(virConnectPtr c, virDomainPtr d, long long utcoffset, void *data);
+int domainEventWatchdogCallback(virConnectPtr c, virDomainPtr d, int action, void *data);
+int domainEventIOErrorCallback(virConnectPtr c, virDomainPtr d, const char *srcPath, const char *devAlias, int action, void *data);
+int domainEventGraphicsCallback(virConnectPtr c, virDomainPtr d, int phase, const virDomainEventGraphicsAddress *local, const virDomainEventGraphicsAddress *remote, const char *authScheme, const virDomainEventGraphicsSubject *subject, void *data);
+int domainEventBlockJobCallback(virConnectPtr c, virDomainPtr d, const char *disk, int type, int status, void *data);
+int domainEventDiskChangeCallback(virConnectPtr c, virDomainPtr d, const char *oldSrcPath, const char *newSrcPath, const char *devAlias, int reason, void *data);
+int domainEventTrayChangeCallback(virConnectPtr c, virDomainPtr d, const char *devAlias, int reason, void *data);
+int domainEventReasonCallback(virConnectPtr c, virDomainPtr d, int reason, void *data);
+int domainEventBalloonChangeCallback(virConnectPtr c, virDomainPtr d, unsigned long long actual, void *data);
+int domainEventDeviceRemovedCallback(virConnectPtr c, virDomainPtr d, const char *devAlias, void *data);
+int domainEventIOErrorReasonCallback(virConnectPtr c, virDomainPtr d, const char *srcPath, const char *devAlias, int action, const char *reason, void *data);

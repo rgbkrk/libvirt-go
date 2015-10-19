@@ -5,6 +5,7 @@ package libvirt
 #include <libvirt/libvirt.h>
 #include <libvirt/virterror.h>
 #include <stdlib.h>
+#include "cfuncs.h"
 
 void virErrorFuncDummy(void *userData, virErrorPtr error)
 {
@@ -59,7 +60,7 @@ int domainEventIOErrorReasonCallback_cgo(virConnectPtr c, virDomainPtr d,
 int domainEventBlockJobCallback_cgo(virConnectPtr c, virDomainPtr d,
                                     const char *disk, int type, int status, void *data)
 {
-    return domainEventIOErrorReasonCallback(c, d, disk, type, status, data);
+    return domainEventBlockJobCallback(c, d, disk, type, status, data);
 }
 
 int domainEventDiskChangeCallback_cgo(virConnectPtr c, virDomainPtr d,
