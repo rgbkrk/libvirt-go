@@ -18,11 +18,6 @@ int domainEventLifecycleCallback_cgo(virConnectPtr c, virDomainPtr d,
     return domainEventLifecycleCallback(c, d, event, detail, data);
 }
 
-int domainEventGenericCallback_cgo(virConnectPtr c, virDomainPtr d, void *data)
-{
-    return domainEventGenericCallback(c, d, data);
-}
-
 int domainEventRTCChangeCallback_cgo(virConnectPtr c, virDomainPtr d,
                                      long long utcoffset, void *data)
 {
@@ -99,9 +94,7 @@ void freeGoCallback_cgo(void* goCallbackId) {
    freeCallbackId((size_t)goCallbackId);
 }
 
-int virConnectDomainEventRegisterAny_cgo(virConnectPtr c,  virDomainPtr d,
-						                             int eventID, virConnectDomainEventGenericCallback cb,
-                                         int goCallbackId) {
+int virConnectDomainEventRegisterAny_cgo(virConnectPtr c,  virDomainPtr d, int eventID, virConnectDomainEventGenericCallback cb, uint goCallbackId) {
     void* id = (void*)0 + goCallbackId; // Hack to silence the warning
     return virConnectDomainEventRegisterAny(c, d, eventID, cb, id, freeGoCallback_cgo);
 }

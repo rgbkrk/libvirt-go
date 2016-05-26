@@ -41,7 +41,8 @@ func TestDomainEventRegister(t *testing.T) {
 
 	EventRegisterDefaultImpl()
 
-	callbackId = conn.DomainEventRegister(
+	var err error
+	callbackId, err = conn.DomainEventRegister(
 		VirDomain{},
 		VIR_DOMAIN_EVENT_ID_LIFECYCLE,
 		&callback,
@@ -79,22 +80,18 @@ func TestDomainEventRegister(t *testing.T) {
 
 	// Check that the internal context entry was added, and that there only is
 	// one.
-	goCallbackLock.Lock()
-	if len(goCallbacks) != 1 {
-		t.Error("goCallbacks should hold one entry")
+	if stDomCbCtx.Size() != 1 {
+		t.Error("Callbacks should hold one entry")
 	}
-	goCallbackLock.Unlock()
 
 	// Deregister the event
-	if ret := conn.DomainEventDeregister(callbackId); ret < 0 {
-		t.Fatal("Event deregistration failed")
+	if err := conn.DomainEventDeregister(callbackId); err != nil {
+		t.Fatalf("Event deregistration failed")
 	}
 	callbackId = -1 // Don't deregister twice
 
 	// Check that the internal context entries was removed
-	goCallbackLock.Lock()
-	if len(goCallbacks) > 0 {
-		t.Error("goCallbacks entry wasn't removed")
+	if stDomCbCtx.Size() != 0 {
+		t.Error("Callbacks entry wasn't removed")
 	}
-	goCallbackLock.Unlock()
 }
