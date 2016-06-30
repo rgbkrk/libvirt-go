@@ -454,3 +454,15 @@ const (
 	VIR_IP_ADDR_TYPE_IPV4 = 0
 	VIR_IP_ADDR_TYPE_IPV6 = 1
 )
+
+// virDomainInterfaceAddressesSource
+const (
+	VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE = 0
+	VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_AGENT = 1
+)
+
+// virIPAddrType
+const (
+	VIR_IP_ADDR_TYPE_IPV4 = 0
+	VIR_IP_ADDR_TYPE_IPV6 = 1
+)
