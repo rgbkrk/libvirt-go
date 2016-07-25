@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+func init() {
+	EventRegisterDefaultImpl()
+}
+
 func TestDomainEventRegister(t *testing.T) {
 
 	callbackId := -1
@@ -41,8 +45,6 @@ func TestDomainEventRegister(t *testing.T) {
 			return 0
 		},
 	)
-
-	EventRegisterDefaultImpl()
 
 	callbackId = conn.DomainEventRegister(
 		VirDomain{},
@@ -100,4 +102,65 @@ func TestDomainEventRegister(t *testing.T) {
 		t.Error("goCallbacks entry wasn't removed")
 	}
 	goCallbackLock.Unlock()
+}
+
+func TestEventAddTimeout(t *testing.T) {
+
+	callbackId := -1
+	defer func() {
+		if callbackId >= 0 {
+			ret := EventRemoveTimeout(callbackId)
+			if ret != 0 {
+				t.Errorf("got %d on EventRemoveTimeout instead of 0", ret)
+			}
+			callbackId = -1
+		}
+	}()
+
+	nbEvents := 0
+
+	callback := EventCallback(
+		func(eventDetails interface{}, f func()) {
+			if timeoutEvent, ok := eventDetails.(TimeoutEvent); ok {
+				if timeoutEvent.TimerId != callbackId {
+					t.Errorf("Timer ID == %d, expected %d", timeoutEvent.TimerId, callbackId)
+				} else {
+					ret := EventRemoveTimeout(callbackId)
+					if ret != 0 {
+						t.Errorf("got %d on EventRemoveTimeout instead of 0", ret)
+					}
+					callbackId = -1
+				}
+			} else {
+				t.Errorf("event details isn't TimeoutEvent")
+			}
+			f()
+		},
+	)
+
+	callbackId = EventAddTimeout(10, // milliseconds
+		&callback,
+		func() {
+			nbEvents++
+		},
+	)
+
+	// This is blocking as long as there is no message
+	done := make(chan struct{})
+	timeout := time.After(100 * time.Millisecond)
+	go func() {
+		EventRunDefaultImpl()
+		close(done)
+		EventRunDefaultImpl()
+	}()
+	select {
+	case <-done: // OK!
+	case <-timeout:
+		t.Fatalf("timeout reached while waiting timeout event")
+		return
+	}
+	time.Sleep(100 * time.Millisecond)
+	if nbEvents != 1 {
+		t.Errorf("Exactly one event expected, got %d", nbEvents)
+	}
 }

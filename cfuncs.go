@@ -91,7 +91,7 @@ int domainEventDeviceRemovedCallback_cgo(virConnectPtr c, virDomainPtr d,
 }
 
 void freeGoCallback_cgo(void* goCallbackId) {
-   freeCallbackId((long)goCallbackId);
+    freeCallbackId((long)goCallbackId);
 }
 
 int virConnectDomainEventRegisterAny_cgo(virConnectPtr c,  virDomainPtr d,
@@ -99,6 +99,16 @@ int virConnectDomainEventRegisterAny_cgo(virConnectPtr c,  virDomainPtr d,
                                          long goCallbackId) {
     void* id = (void*)goCallbackId;
     return virConnectDomainEventRegisterAny(c, d, eventID, cb, id, freeGoCallback_cgo);
+}
+
+int eventTimeoutCallback_cgo(int timer, void *data)
+{
+    return eventTimeoutCallback(timer, data);
+}
+
+int virEventAddTimeout_cgo(int timeout, virEventTimeoutCallback cb, long goCallbackId) {
+    void* id = (void*)goCallbackId;
+    return virEventAddTimeout(timeout, cb, id, freeGoCallback_cgo);
 }
 */
 import "C"

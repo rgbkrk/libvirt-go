@@ -56,6 +56,10 @@ int domainEventDeviceRemovedCallback_cgo(virConnectPtr c, virDomainPtr d,
 int virConnectDomainEventRegisterAny_cgo(virConnectPtr c,  virDomainPtr d,
                                          int eventID, virConnectDomainEventGenericCallback cb,
                                          long goCallbackId);
+
+int eventTimeoutCallback_cgo(int timer, void *data);
+
+int virEventAddTimeout_cgo(int timeout, virEventTimeoutCallback cb, long goCallbackId);
 */
 import "C"
 
@@ -363,6 +367,25 @@ type domainCallbackContext struct {
 	f  func()
 }
 
+type TimeoutEvent struct {
+	TimerId int
+}
+
+//export eventTimeoutCallback
+func eventTimeoutCallback(timer int, opaque int) {
+	eventDetails := TimeoutEvent{
+		TimerId: timer,
+	}
+	callEventCallbackId(opaque, eventDetails)
+}
+
+type EventCallback func(event interface{}, f func())
+
+type eventCallbackContext struct {
+	cb *EventCallback
+	f  func()
+}
+
 const firstGoCallbackId int = 100 // help catch some additional errors during test
 var goCallbackLock sync.RWMutex
 var goCallbacks = make(map[int]interface{})
@@ -387,6 +410,22 @@ func callDomainCallbackId(goCallbackId int, c *VirConnection, d *VirDomain,
 	switch cctx := ctx.(type) {
 	case *domainCallbackContext:
 		return (*cctx.cb)(c, d, event, cctx.f)
+	default:
+		panic("Inappropriate callback type called")
+	}
+}
+
+func callEventCallbackId(goCallbackId int, event interface{}) {
+	goCallbackLock.RLock()
+	ctx := goCallbacks[goCallbackId]
+	goCallbackLock.RUnlock()
+	if ctx == nil {
+		// If this happens there must be a bug in libvirt
+		panic("Callback arrived after freeCallbackId was called")
+	}
+	switch cctx := ctx.(type) {
+	case *eventCallbackContext:
+		(*cctx.cb)(event, cctx.f)
 	default:
 		panic("Inappropriate callback type called")
 	}
@@ -467,4 +506,31 @@ func EventRegisterDefaultImpl() int {
 
 func EventRunDefaultImpl() int {
 	return int(C.virEventRunDefaultImpl())
+}
+
+func EventAddTimeout(timeout int,
+	callback *EventCallback,
+	opaque func()) int {
+	var callbackPtr unsafe.Pointer
+	context := &eventCallbackContext{
+		cb: callback,
+		f:  opaque,
+	}
+	goCallbackId := registerCallbackId(context)
+	callbackPtr = unsafe.Pointer(C.eventTimeoutCallback_cgo)
+	ret := C.virEventAddTimeout_cgo(C.int(timeout),
+		C.virEventTimeoutCallback(callbackPtr), C.long(goCallbackId))
+	if ret == -1 {
+		freeCallbackId(goCallbackId)
+		return -1
+	}
+	return int(ret)
+}
+
+func EventRemoveTimeout(callbackId int) int {
+	return int(C.virEventRemoveTimeout(C.int(callbackId)))
+}
+
+func EventUpdateTimeout(callbackId int, timeout int) {
+	C.virEventUpdateTimeout(C.int(callbackId), C.int(timeout))
 }
