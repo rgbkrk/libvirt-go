@@ -59,7 +59,11 @@ int virConnectDomainEventRegisterAny_cgo(virConnectPtr c,  virDomainPtr d,
 
 int eventTimeoutCallback_cgo(int timer, void *data);
 
+int eventHandleCallback_cgo(int fd, int event, void *data);
+
 int virEventAddTimeout_cgo(int timeout, virEventTimeoutCallback cb, long goCallbackId);
+
+int virEventAddHandle_cgo(int fd, int event, virEventHandleCallback cb, long goCallbackIs);
 */
 import "C"
 
@@ -371,10 +375,26 @@ type TimeoutEvent struct {
 	TimerId int
 }
 
+type HandleEvent struct {
+	WatchId int
+	Fd      uintptr
+	Events  int
+}
+
 //export eventTimeoutCallback
 func eventTimeoutCallback(timer int, opaque int) {
 	eventDetails := TimeoutEvent{
 		TimerId: timer,
+	}
+	callEventCallbackId(opaque, eventDetails)
+}
+
+//export eventHandleCallback
+func eventHandleCallback(watch int, fd int, events int, opaque int) {
+	eventDetails := HandleEvent{
+		WatchId: watch,
+		Fd:      uintptr(fd),
+		Events:  events,
 	}
 	callEventCallbackId(opaque, eventDetails)
 }
@@ -533,4 +553,30 @@ func EventRemoveTimeout(callbackId int) int {
 
 func EventUpdateTimeout(callbackId int, timeout int) {
 	C.virEventUpdateTimeout(C.int(callbackId), C.int(timeout))
+}
+
+func EventAddHandle(fd uintptr, events int,
+	callback *EventCallback, opaque func()) int {
+	var callbackPtr unsafe.Pointer
+	context := &eventCallbackContext{
+		cb: callback,
+		f:  opaque,
+	}
+	goCallbackId := registerCallbackId(context)
+	callbackPtr = unsafe.Pointer(C.eventHandleCallback_cgo)
+	ret := C.virEventAddHandle_cgo(C.int(fd), C.int(events),
+		C.virEventHandleCallback(callbackPtr), C.long(goCallbackId))
+	if ret == -1 {
+		freeCallbackId(goCallbackId)
+		return -1
+	}
+	return int(ret)
+}
+
+func EventRemoveHandle(callbackId int) int {
+	return int(C.virEventRemoveHandle(C.int(callbackId)))
+}
+
+func EventUpdateHandle(callbackId int, events int) {
+	C.virEventUpdateHandle(C.int(callbackId), C.int(events))
 }

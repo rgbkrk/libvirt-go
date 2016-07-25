@@ -106,9 +106,19 @@ int eventTimeoutCallback_cgo(int timer, void *data)
     return eventTimeoutCallback(timer, data);
 }
 
+int eventHandleCallback_cgo(int watch, int fd, int events, void *data)
+{
+    return eventHandleCallback(watch, fd, events, data);
+}
+
 int virEventAddTimeout_cgo(int timeout, virEventTimeoutCallback cb, long goCallbackId) {
     void* id = (void*)goCallbackId;
     return virEventAddTimeout(timeout, cb, id, freeGoCallback_cgo);
+}
+
+int virEventAddHandle_cgo(int fd, int events, virEventHandleCallback cb, long goCallbackId) {
+    void* id = (void*)goCallbackId;
+    return virEventAddHandle(fd, events, cb, id, freeGoCallback_cgo);
 }
 */
 import "C"

@@ -1,6 +1,7 @@
 package libvirt
 
 import (
+	"os"
 	"testing"
 	"time"
 )
@@ -157,6 +158,82 @@ func TestEventAddTimeout(t *testing.T) {
 	case <-done: // OK!
 	case <-timeout:
 		t.Fatalf("timeout reached while waiting timeout event")
+		return
+	}
+	time.Sleep(100 * time.Millisecond)
+	if nbEvents != 1 {
+		t.Errorf("Exactly one event expected, got %d", nbEvents)
+	}
+}
+
+func TestEventAddHandle(t *testing.T) {
+
+	callbackId := -1
+	defer func() {
+		if callbackId >= 0 {
+			ret := EventRemoveHandle(callbackId)
+			if ret != 0 {
+				t.Errorf("got %d on EventRemoveHandle instead of 0", ret)
+			}
+			callbackId = -1
+		}
+	}()
+
+	rp, wp, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	nbEvents := 0
+	callback := EventCallback(
+		func(eventDetails interface{}, f func()) {
+			if handleEvent, ok := eventDetails.(HandleEvent); ok {
+				if handleEvent.WatchId != callbackId {
+					t.Errorf("Watch ID == %d, expected %d", handleEvent.WatchId, callbackId)
+					return
+				}
+				if handleEvent.Fd != rp.Fd() {
+					t.Errorf("fd == %d, expected %d", handleEvent.Fd, rp.Fd())
+				}
+				if handleEvent.Events != VIR_EVENT_HANDLE_READABLE {
+					t.Errorf("Events == %d, expected %d",
+						handleEvent.Events, VIR_EVENT_HANDLE_READABLE)
+				}
+				ret := EventRemoveHandle(callbackId)
+				if ret != 0 {
+					t.Errorf("got %d on EventRemoveHandle instead of 0", ret)
+				}
+				callbackId = -1
+			} else {
+				t.Errorf("event details isn't HandleEvent")
+			}
+			f()
+		},
+	)
+
+	callbackId = EventAddHandle(rp.Fd(),
+		VIR_EVENT_HANDLE_READABLE|VIR_EVENT_HANDLE_HANGUP|VIR_EVENT_HANDLE_ERROR,
+		&callback,
+		func() {
+			nbEvents++
+		},
+	)
+
+	// This is blocking as long as there is no message
+	done := make(chan struct{})
+	handle := time.After(100 * time.Millisecond)
+	go func() {
+		EventRunDefaultImpl()
+		close(done)
+		EventRunDefaultImpl()
+	}()
+	if n, err := wp.Write([]byte("hello")); n != len("hello") || err != nil {
+		t.Fatalf("not able to write to pipe: %v", err)
+	}
+	select {
+	case <-done: // OK!
+	case <-handle:
+		t.Fatalf("handle reached while waiting handle event")
 		return
 	}
 	time.Sleep(100 * time.Millisecond)
