@@ -1,9 +1,14 @@
 package libvirt
 
 import (
+	"os"
 	"testing"
 	"time"
 )
+
+func init() {
+	EventRegisterDefaultImpl()
+}
 
 func TestDomainEventRegister(t *testing.T) {
 
@@ -41,8 +46,6 @@ func TestDomainEventRegister(t *testing.T) {
 			return 0
 		},
 	)
-
-	EventRegisterDefaultImpl()
 
 	callbackId = conn.DomainEventRegister(
 		VirDomain{},
@@ -100,4 +103,141 @@ func TestDomainEventRegister(t *testing.T) {
 		t.Error("goCallbacks entry wasn't removed")
 	}
 	goCallbackLock.Unlock()
+}
+
+func TestEventAddTimeout(t *testing.T) {
+
+	callbackId := -1
+	defer func() {
+		if callbackId >= 0 {
+			ret := EventRemoveTimeout(callbackId)
+			if ret != 0 {
+				t.Errorf("got %d on EventRemoveTimeout instead of 0", ret)
+			}
+			callbackId = -1
+		}
+	}()
+
+	nbEvents := 0
+
+	callback := EventCallback(
+		func(eventDetails interface{}, f func()) {
+			if timeoutEvent, ok := eventDetails.(TimeoutEvent); ok {
+				if timeoutEvent.TimerId != callbackId {
+					t.Errorf("Timer ID == %d, expected %d", timeoutEvent.TimerId, callbackId)
+				} else {
+					ret := EventRemoveTimeout(callbackId)
+					if ret != 0 {
+						t.Errorf("got %d on EventRemoveTimeout instead of 0", ret)
+					}
+					callbackId = -1
+				}
+			} else {
+				t.Errorf("event details isn't TimeoutEvent")
+			}
+			f()
+		},
+	)
+
+	callbackId = EventAddTimeout(10, // milliseconds
+		&callback,
+		func() {
+			nbEvents++
+		},
+	)
+
+	// This is blocking as long as there is no message
+	done := make(chan struct{})
+	timeout := time.After(100 * time.Millisecond)
+	go func() {
+		EventRunDefaultImpl()
+		close(done)
+		EventRunDefaultImpl()
+	}()
+	select {
+	case <-done: // OK!
+	case <-timeout:
+		t.Fatalf("timeout reached while waiting timeout event")
+		return
+	}
+	time.Sleep(100 * time.Millisecond)
+	if nbEvents != 1 {
+		t.Errorf("Exactly one event expected, got %d", nbEvents)
+	}
+}
+
+func TestEventAddHandle(t *testing.T) {
+
+	callbackId := -1
+	defer func() {
+		if callbackId >= 0 {
+			ret := EventRemoveHandle(callbackId)
+			if ret != 0 {
+				t.Errorf("got %d on EventRemoveHandle instead of 0", ret)
+			}
+			callbackId = -1
+		}
+	}()
+
+	rp, wp, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	nbEvents := 0
+	callback := EventCallback(
+		func(eventDetails interface{}, f func()) {
+			if handleEvent, ok := eventDetails.(HandleEvent); ok {
+				if handleEvent.WatchId != callbackId {
+					t.Errorf("Watch ID == %d, expected %d", handleEvent.WatchId, callbackId)
+					return
+				}
+				if handleEvent.Fd != rp.Fd() {
+					t.Errorf("fd == %d, expected %d", handleEvent.Fd, rp.Fd())
+				}
+				if handleEvent.Events != VIR_EVENT_HANDLE_READABLE {
+					t.Errorf("Events == %d, expected %d",
+						handleEvent.Events, VIR_EVENT_HANDLE_READABLE)
+				}
+				ret := EventRemoveHandle(callbackId)
+				if ret != 0 {
+					t.Errorf("got %d on EventRemoveHandle instead of 0", ret)
+				}
+				callbackId = -1
+			} else {
+				t.Errorf("event details isn't HandleEvent")
+			}
+			f()
+		},
+	)
+
+	callbackId = EventAddHandle(rp.Fd(),
+		VIR_EVENT_HANDLE_READABLE|VIR_EVENT_HANDLE_HANGUP|VIR_EVENT_HANDLE_ERROR,
+		&callback,
+		func() {
+			nbEvents++
+		},
+	)
+
+	// This is blocking as long as there is no message
+	done := make(chan struct{})
+	handle := time.After(100 * time.Millisecond)
+	go func() {
+		EventRunDefaultImpl()
+		close(done)
+		EventRunDefaultImpl()
+	}()
+	if n, err := wp.Write([]byte("hello")); n != len("hello") || err != nil {
+		t.Fatalf("not able to write to pipe: %v", err)
+	}
+	select {
+	case <-done: // OK!
+	case <-handle:
+		t.Fatalf("handle reached while waiting handle event")
+		return
+	}
+	time.Sleep(100 * time.Millisecond)
+	if nbEvents != 1 {
+		t.Errorf("Exactly one event expected, got %d", nbEvents)
+	}
 }
