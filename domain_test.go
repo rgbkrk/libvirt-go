@@ -35,6 +35,32 @@ func buildTestDomain() (VirDomain, VirConnection) {
 	return dom, conn
 }
 
+func buildSMPTestDomain() (VirDomain, VirConnection) {
+	conn := buildTestConnection()
+	dom, err := conn.DomainDefineXML(`<domain type="test">
+		<name>` + time.Now().String() + `</name>
+		<memory unit="KiB">8192</memory>
+		<vcpu>8</vcpu>
+  		<cputune>
+                        <vcpupin vcpu="0" cpuset="7"/>
+                        <vcpupin vcpu="1" cpuset="6"/>
+                        <vcpupin vcpu="2" cpuset="5"/>
+                        <vcpupin vcpu="3" cpuset="4"/>
+                        <vcpupin vcpu="4" cpuset="3"/>
+                        <vcpupin vcpu="5" cpuset="2"/>
+                        <vcpupin vcpu="6" cpuset="1"/>
+                        <vcpupin vcpu="7" cpuset="0"/>
+         </cputune>
+		<os>
+			<type>hvm</type>
+		</os>
+	</domain>`)
+	if err != nil {
+		panic(err)
+	}
+	return dom, conn
+}
+
 func buildTransientTestDomain() (VirDomain, VirConnection) {
 	conn := buildTestConnection()
 	dom, err := conn.DomainCreateXML(`<domain type="test">
@@ -604,7 +630,7 @@ func TestDomainScreenshot(t *testing.T) {
 }
 
 func TestDomainGetVcpus(t *testing.T) {
-	dom, conn := buildTestDomain()
+	dom, conn := buildSMPTestDomain()
 	defer func() {
 		dom.Free()
 		if res, _ := conn.CloseConnection(); res != 0 {
@@ -617,13 +643,18 @@ func TestDomainGetVcpus(t *testing.T) {
 	}
 	defer dom.Destroy()
 
-	stats, err := dom.GetVcpus(1)
+	ni, err := conn.GetNodeInfo()
+	if err != nil {
+		panic(err)
+	}
+
+	stats, err := dom.GetVcpus(8, ni.GetMaxCPUs())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if len(stats) != 1 {
-		t.Fatal("should have 1 cpu")
+	if len(stats) != 8 {
+		t.Fatal("should have 8 cpu")
 	}
 
 	if stats[0].State != 1 {
