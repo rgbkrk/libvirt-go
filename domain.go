@@ -821,3 +821,57 @@ func (d *VirDomain) PinVcpuFlags(vcpu uint, cpuMap []uint32, flags uint, maxCPUs
 
 	return nil
 }
+
+func (d *VirDomain) BlockJobAbort(disk string, flags uint32) error {
+
+	cDisk := C.CString(disk)
+	defer C.free(unsafe.Pointer(cDisk))
+
+	result := int(C.virDomainBlockJobAbort(d.ptr, cDisk, C.uint(flags)))
+	if result == -1 {
+
+		return GetLastError()
+	}
+
+	return nil
+}
+
+type VirDomainBlockJobInfo struct {
+	ptr C.virDomainBlockJobInfo
+}
+
+func (b *VirDomainBlockJobInfo) Type() int {
+	return int(b.ptr._type)
+}
+
+func (b *VirDomainBlockJobInfo) Bandwidth() uint32 {
+	return uint32(b.ptr.bandwidth)
+}
+
+func (b *VirDomainBlockJobInfo) Cur() uint64 {
+	return uint64(b.ptr.cur)
+}
+
+func (b *VirDomainBlockJobInfo) End() uint64 {
+	return uint64(b.ptr.end)
+}
+
+func (d *VirDomain) GetBlockJobInfo(disk string, flags uint32) (VirDomainBlockJobInfo, error) {
+	var (
+		info = VirDomainBlockJobInfo{}
+		ptr  C.virDomainBlockJobInfo
+	)
+
+	cDisk := C.CString(disk)
+	defer C.free(unsafe.Pointer(cDisk))
+
+	result := int(C.virDomainGetBlockJobInfo(d.ptr, cDisk, (*C.virDomainBlockJobInfo)(unsafe.Pointer(&ptr)), C.uint(flags)))
+	if result == -1 {
+
+		return info, GetLastError()
+	}
+
+	info.ptr = ptr
+
+	return info, nil
+}
