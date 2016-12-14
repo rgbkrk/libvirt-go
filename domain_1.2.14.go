@@ -80,12 +80,10 @@ func (dest *VirTypedParameters) loadToCPtr() (params C.virTypedParameterPtr, nPa
 	for _, param := range *dest {
 
 		switch param.Name {
-
 		case VIR_DOMAIN_BLOCK_COPY_GRANULARITY:
 			value, ok := param.Value.(uint)
 			if !ok {
 				err = errors.New("Mismatched parameter value type")
-
 				return
 			}
 
@@ -95,15 +93,12 @@ func (dest *VirTypedParameters) loadToCPtr() (params C.virTypedParameterPtr, nPa
 			result := C.virTypedParamsAddUInt(&params, &nParams, &maxParams, cName, C.uint(value))
 			if result == -1 {
 				err = GetLastError()
-
 				return
 			}
-
 		case VIR_DOMAIN_BLOCK_COPY_BANDWIDTH, VIR_DOMAIN_BLOCK_COPY_BUF_SIZE:
 			value, ok := param.Value.(uint64)
 			if !ok {
 				err = errors.New("Mismatched parameter value type")
-
 				return
 			}
 
@@ -113,17 +108,13 @@ func (dest *VirTypedParameters) loadToCPtr() (params C.virTypedParameterPtr, nPa
 			result := C.virTypedParamsAddULLong(&params, &nParams, &maxParams, cName, C.ulonglong(value))
 			if result == -1 {
 				err = GetLastError()
-
 				return
 			}
-
 		default:
 			err = errors.New("Unknown parameter name: " + param.Name)
-
 			return
 		}
 	}
-
 	return
 }
 
@@ -135,18 +126,14 @@ func (d *VirDomain) BlockCopy(disk string, destXML string, params VirTypedParame
 	defer C.free(unsafe.Pointer(cDestXML))
 	if cParams, cnParams, err := params.loadToCPtr(); err != nil {
 		C.virTypedParamsFree(cParams, cnParams)
-
 		return err
-
 	} else {
 		defer C.virTypedParamsFree(cParams, cnParams)
 
 		result := int(C.virDomainBlockCopy(d.ptr, cDisk, cDestXML, cParams, cnParams, C.uint(flags)))
 		if result == -1 {
-
 			return GetLastError()
 		}
 	}
-
 	return nil
 }

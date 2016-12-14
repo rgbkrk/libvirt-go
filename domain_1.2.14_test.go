@@ -59,8 +59,8 @@ func TestDomainBlockCopy(t *testing.T) {
 	defer dom.Destroy()
 
 	var (
-		stop                     = make(chan struct{})
-		cb   DomainEventCallback = func(c *VirConnection, d *VirDomain, event interface{}, f func()) int {
+		stop = make(chan struct{})
+		cb DomainEventCallback = func(c *VirConnection, d *VirDomain, event interface{}, f func()) int {
 			if blockJobEvent, ok := event.(DomainBlockJobEvent); ok {
 				if blockJobEvent.Type == VIR_DOMAIN_BLOCK_JOB_TYPE_COPY {
 					switch blockJobEvent.Status {
