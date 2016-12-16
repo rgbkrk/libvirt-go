@@ -31,7 +31,12 @@ install:
   - sudo libvirtd -d -l -f libvirtd.conf
   - sudo virtlogd -d || true
   - sudo chmod a+rwx /var/run/libvirt/libvirt-sock*
+  - sudo chmod a+rwx /var/lib/libvirt/images
   - echo "pass" | sudo saslpasswd2 -p -a libvirt user
 
 script:
-  go test -timeout 1m -tags "${TAGS}" -v
+  - qemu-img create -f qcow2 /var/lib/libvirt/images/test-src.qcow2 1G
+  - sudo chmod a+rwx /var/lib/libvirt/images/test-src.qcow2
+  - go test -timeout 1m -tags "${TAGS}" -v
+
+
