@@ -706,13 +706,8 @@ func virCpuMapLen(cpu uint32) C.int {
 	return C.int((cpu + 7) / 8)
 }
 
-// extractCpuMask extracts an individual cpumask from a slice of cpumasks
-// and parses it into a slice of CPU ids
-func extractCpuMask(bytesCpuMaps []byte, n, mapLen int) []uint32 {
+func decodeCpuMap(cpuMap []byte) []uint32 {
 	const byteSize = uint(8)
-
-	// Repslice the big array to separate only mask number 'n'
-	cpuMap := bytesCpuMaps[n*mapLen : (n+1)*mapLen]
 
 	out := make([]uint32, 0)
 	for i, b := range cpuMap { // iterate over bytes of the mask
@@ -722,7 +717,6 @@ func extractCpuMask(bytesCpuMaps []byte, n, mapLen int) []uint32 {
 			}
 		}
 	}
-
 	return out
 }
 
@@ -747,12 +741,15 @@ func (d *VirDomain) GetVcpusCpuMap(maxInfo int, maxCPUs uint32) ([]VirVcpuInfo, 
 
 	out := make([]VirVcpuInfo, 0)
 	for i := 0; i < int(result); i++ {
+		// Repslice the big array to separate only mask number 'i'
+		cpuMap := bytesCpuMaps[i*int(mapLen) : (i+1)*int(mapLen)]
+
 		out = append(out, VirVcpuInfo{
 			Number:  uint32(ptr[i].number),
 			State:   int32(ptr[i].state),
 			CpuTime: uint64(ptr[i].cpuTime),
 			Cpu:     int32(ptr[i].cpu),
-			CpuMap:  extractCpuMask(bytesCpuMaps, i, int(mapLen)),
+			CpuMap:  decodeCpuMap(cpuMap),
 		})
 	}
 
@@ -874,4 +871,35 @@ func (d *VirDomain) GetBlockJobInfo(disk string, flags uint32) (VirDomainBlockJo
 	info.ptr = ptr
 
 	return info, nil
+}
+
+func (d *VirDomain) GetEmulatorPinInfo(maxCPUs uint32) ([]uint32, error) {
+
+	mapLen := virCpuMapLen(maxCPUs)                  // Length of CPUs bitmask in bytes
+	cpuMap := (*C.uchar)(C.malloc(C.size_t(mapLen))) // Array itself
+	defer C.free(unsafe.Pointer(cpuMap))
+
+	result := C.virDomainGetEmulatorPinInfo(
+		d.ptr, cpuMap, mapLen, VIR_DOMAIN_AFFECT_CURRENT)
+
+	if result == -1 {
+		return nil, GetLastError()
+	}
+
+	// Convert to golang []byte for easier handling
+	bytesCpuMap := C.GoBytes(unsafe.Pointer(cpuMap), C.int(mapLen))
+
+	return decodeCpuMap(bytesCpuMap), nil
+}
+
+func (d *VirDomain) PinEmulator(cpuMap []uint32, maxCPUs uint32) error {
+	cpumap, maplen := cpuMask(cpuMap, maxCPUs)
+
+	result := C.virDomainPinEmulator(d.ptr, cpumap, maplen, VIR_DOMAIN_AFFECT_LIVE)
+
+	if result == -1 {
+		return GetLastError()
+	}
+
+	return nil
 }
