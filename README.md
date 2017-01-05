@@ -1,6 +1,6 @@
 # libvirt-go [![Build Status](https://travis-ci.org/rgbkrk/libvirt-go.svg?branch=master)](https://travis-ci.org/rgbkrk/libvirt-go) [![GoDoc](https://godoc.org/gopkg.in/alexzorin/libvirt-go.v2?status.svg)](http://godoc.org/gopkg.in/alexzorin/libvirt-go.v2)
 
-Go bindings for libvirt. Those bindings are **deprecated**. Please,
+Go bindings for libvirt. These bindings are **deprecated**. Please,
 migrate to the
 [new official version](https://github.com/libvirt/libvirt-go).
 You'll have to do
