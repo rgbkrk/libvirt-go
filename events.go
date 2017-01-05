@@ -2,6 +2,7 @@ package libvirt
 
 import (
 	"fmt"
+	"reflect"
 	"unsafe"
 )
 
@@ -216,7 +217,9 @@ func domainEventGraphicsCallback(c C.virConnectPtr, d C.virDomainPtr,
 
 	subjectGo := make([]DomainEventGraphicsSubjectIdentity, subject.nidentity)
 	nidentities := int(subject.nidentity)
-	identities := (*[1 << 30]C.virDomainEventGraphicsSubjectIdentity)(unsafe.Pointer(&subject.identities))[:nidentities:nidentities]
+	var identities []C.virDomainEventGraphicsSubjectIdentity
+	header := (*reflect.SliceHeader)(unsafe.Pointer(&identities))
+	*header = reflect.SliceHeader{uintptr(unsafe.Pointer(&subject.identities)), nidentities, nidentities}
 	for _, identity := range identities {
 		subjectGo = append(subjectGo,
 			DomainEventGraphicsSubjectIdentity{
