@@ -1,6 +1,11 @@
 # libvirt-go [![Build Status](https://travis-ci.org/rgbkrk/libvirt-go.svg?branch=master)](https://travis-ci.org/rgbkrk/libvirt-go) [![GoDoc](https://godoc.org/gopkg.in/alexzorin/libvirt-go.v2?status.svg)](http://godoc.org/gopkg.in/alexzorin/libvirt-go.v2)
 
-Go bindings for libvirt.
+Go bindings for libvirt. Those bindings are **deprecated**. Please,
+migrate to the
+[new official version](https://github.com/libvirt/libvirt-go).
+You'll have to do
+[some minor adjustments](https://www.berrange.com/posts/2016/12/15/announce-new-libvirt-project-go-language-bindings/)
+to your code.
 
 Make sure to have `libvirt-dev` package (or the development files otherwise somewhere in your include path)
 
